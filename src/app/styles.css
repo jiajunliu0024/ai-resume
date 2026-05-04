@@ -361,6 +361,87 @@ textarea {
   gap: 12px;
 }
 
+.section-header h2 {
+  min-width: 0;
+}
+
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.section-delete-button,
+.chip-delete-button {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #667085;
+  background: #f2f4f7;
+}
+
+.section-delete-button {
+  width: 36px;
+  height: 36px;
+}
+
+.section-delete-button:hover,
+.section-delete-button:focus-visible,
+.chip-delete-button:hover,
+.chip-delete-button:focus-visible {
+  color: #b42318;
+  background: #fee4e2;
+  outline: none;
+}
+
+.chip-delete-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+/* Skills on Tailor: wrap horizontally; each row is input + delete (not full-width). */
+.skills-chip-list {
+  align-items: center;
+}
+
+.skill-chip-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.skill-chip-input {
+  flex: 0 1 auto;
+  min-width: 7rem;
+  max-width: min(100%, 22rem);
+  field-sizing: content;
+}
+
+.resume-edit-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin: -4px 0 4px;
+}
+
+.achievement-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.achievement-row .compact-textarea {
+  flex: 1;
+  min-width: 0;
+}
+
 h1,
 h2,
 p {
@@ -489,7 +570,6 @@ h2 {
 }
 
 .editable-chip {
-  max-width: 150px;
   min-height: 30px;
   border: 0;
   border-radius: 999px;
@@ -504,6 +584,10 @@ h2 {
   display: inline-flex;
   align-items: center;
   width: auto;
+  max-width: min(100%, 200px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .editable-chip:focus {

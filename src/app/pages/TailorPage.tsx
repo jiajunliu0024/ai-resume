@@ -185,6 +185,24 @@ function enrichResumeSections(resume: Resume | null) {
   };
 }
 
+function TrashIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14ZM10 11v6M14 11v6" />
+    </svg>
+  );
+}
+
 function buildParsedResumeDebugJson(resume: Resume) {
   return {
     title: resume.title,
@@ -385,6 +403,136 @@ export function TailorPage({
     });
   }
 
+  function clearEntireSection(
+    section:
+      | "basicInfo"
+      | "summary"
+      | "skills"
+      | "experience"
+      | "projects"
+      | "education"
+      | "certifications",
+  ) {
+    if (!activeResume) {
+      return;
+    }
+
+    if (section === "basicInfo") {
+      saveResume({
+        ...activeResume,
+        basicInfo: "",
+        basicInfoFields: { ...emptyBasicInfo, links: [] },
+      });
+      return;
+    }
+
+    if (section === "summary") {
+      saveResume({ ...activeResume, summary: "" });
+      return;
+    }
+
+    if (section === "skills") {
+      saveResume({ ...activeResume, skills: "" });
+      return;
+    }
+
+    if (section === "experience") {
+      saveResume({
+        ...activeResume,
+        experience: "",
+        experienceItems: [],
+      });
+      return;
+    }
+
+    if (section === "projects") {
+      saveResume({
+        ...activeResume,
+        projects: "",
+        projectItems: [],
+      });
+      return;
+    }
+
+    if (section === "education") {
+      saveResume({
+        ...activeResume,
+        education: "",
+        educationItems: [],
+      });
+      return;
+    }
+
+    saveResume({ ...activeResume, certifications: "" });
+  }
+
+  function removeExperienceItem(itemId: string) {
+    if (!activeResume) {
+      return;
+    }
+
+    const experienceItems = (activeResume.experienceItems ?? []).filter(
+      (item) => item.id !== itemId,
+    );
+
+    saveResume({
+      ...activeResume,
+      experience: formatExperienceItems(experienceItems),
+      experienceItems,
+    });
+  }
+
+  function removeEducationItem(itemId: string) {
+    if (!activeResume) {
+      return;
+    }
+
+    const existingItems = activeResume.educationItems?.length
+      ? activeResume.educationItems
+      : [];
+    const educationItems = existingItems.filter((item) => item.id !== itemId);
+
+    saveResume({
+      ...activeResume,
+      education: educationItems.length ? formatEducationItems(educationItems) : "",
+      educationItems,
+    });
+  }
+
+  function removeSkillAt(skillIndex: number) {
+    if (!activeResume) {
+      return;
+    }
+
+    const nextSkills = selectedSkills.filter((_, index) => index !== skillIndex);
+
+    saveResume({
+      ...activeResume,
+      skills: joinSkillChips(nextSkills),
+    });
+  }
+
+  function removeExperienceAchievement(itemId: string, achievementIndex: number) {
+    if (!activeResume) {
+      return;
+    }
+
+    const experienceItems = (activeResume.experienceItems ?? []).map((item) =>
+      item.id === itemId
+        ? {
+            ...item,
+            achievements: item.achievements.filter((_, index) => index !== achievementIndex),
+          }
+        : item,
+    );
+
+    saveResume({
+      ...activeResume,
+      experience: formatExperienceItems(experienceItems),
+      experienceItems,
+    });
+  }
+
   if (!activeResume) {
     return (
       <main className="page stack">
@@ -430,7 +578,17 @@ export function TailorPage({
       <Card tone="soft">
         <div className="section-header">
           <span className="eyebrow">Basic Info</span>
-          <span className="fit">Editable</span>
+          <div className="section-header-actions">
+            <span className="fit">Editable</span>
+            <button
+              type="button"
+              className="section-delete-button"
+              aria-label="Clear basic info section"
+              onClick={() => clearEntireSection("basicInfo")}
+            >
+              <TrashIcon />
+            </button>
+          </div>
         </div>
         <div className="basic-info-grid">
           <label className="editor-field-label">
@@ -487,19 +645,39 @@ export function TailorPage({
       <Card tone="soft">
         <div className="section-header">
           <span className="eyebrow">Skills</span>
-          <button className="ai-enhance-button" type="button">
-            AI Rewrite
-          </button>
+          <div className="section-header-actions">
+            <button className="ai-enhance-button" type="button">
+              AI Rewrite
+            </button>
+            <button
+              type="button"
+              className="section-delete-button"
+              aria-label="Clear all skills"
+              onClick={() => clearEntireSection("skills")}
+            >
+              <TrashIcon />
+            </button>
+          </div>
         </div>
-        <div className="editable-chip-list">
+        <div className="editable-chip-list skills-chip-list">
           {selectedSkills.length ? (
             selectedSkills.map((skill, index) => (
-              <input
-                className="editable-chip"
-                key={`${skill}-${index}`}
-                value={skill}
-                onChange={(event) => updateSkill(index, event.target.value)}
-              />
+              <div className="skill-chip-row" key={`${skill}-${index}`}>
+                <input
+                  className="editable-chip skill-chip-input"
+                  value={skill}
+                  size={Math.max(8, Math.min(skill.length + 2, 48))}
+                  onChange={(event) => updateSkill(index, event.target.value)}
+                />
+                <button
+                  type="button"
+                  className="chip-delete-button"
+                  aria-label={`Remove skill ${skill}`}
+                  onClick={() => removeSkillAt(index)}
+                >
+                  <TrashIcon />
+                </button>
+              </div>
             ))
           ) : (
             <p className="helper-text">No skills parsed yet.</p>
@@ -513,9 +691,19 @@ export function TailorPage({
       <Card>
         <div className="section-header">
           <h2>Summary</h2>
-          <button className="ai-enhance-button" type="button">
-            AI Rewrite
-          </button>
+          <div className="section-header-actions">
+            <button className="ai-enhance-button" type="button">
+              AI Rewrite
+            </button>
+            <button
+              type="button"
+              className="section-delete-button"
+              aria-label="Clear summary section"
+              onClick={() => clearEntireSection("summary")}
+            >
+              <TrashIcon />
+            </button>
+          </div>
         </div>
         <textarea
           className="textarea inline-edit-textarea"
@@ -529,14 +717,34 @@ export function TailorPage({
       <Card>
         <div className="section-header">
           <h2>Experience</h2>
-          <button className="ai-enhance-button" type="button">
-            AI Rewrite
-          </button>
+          <div className="section-header-actions">
+            <button className="ai-enhance-button" type="button">
+              AI Rewrite
+            </button>
+            <button
+              type="button"
+              className="section-delete-button"
+              aria-label="Clear all experience"
+              onClick={() => clearEntireSection("experience")}
+            >
+              <TrashIcon />
+            </button>
+          </div>
         </div>
         {activeResume.experienceItems?.length ? (
           <div className="resume-item-list">
             {activeResume.experienceItems.map((item) => (
               <div className="resume-edit-card" key={item.id}>
+                <div className="resume-edit-card-header">
+                  <button
+                    type="button"
+                    className="section-delete-button"
+                    aria-label="Remove this experience entry"
+                    onClick={() => removeExperienceItem(item.id)}
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
                 <div className="editor-field-grid">
                   <label className="editor-field-label">
                     Job Title
@@ -586,18 +794,29 @@ export function TailorPage({
                 <div className="achievement-list">
                   <span className="editor-field-label">Achievements</span>
                   {item.achievements.map((achievement, index) => (
-                    <textarea
-                      className="textarea inline-edit-textarea compact-textarea"
-                      key={`${item.id}-${index}`}
-                      value={achievement}
-                      onChange={(event) =>
-                        updateExperienceAchievement(
-                          item.id,
-                          index,
-                          event.target.value,
-                        )
-                      }
-                    />
+                    <div className="achievement-row" key={`${item.id}-${index}`}>
+                      <textarea
+                        className="textarea inline-edit-textarea compact-textarea"
+                        value={achievement}
+                        onChange={(event) =>
+                          updateExperienceAchievement(
+                            item.id,
+                            index,
+                            event.target.value,
+                          )
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="chip-delete-button"
+                        aria-label="Remove this achievement"
+                        onClick={() =>
+                          removeExperienceAchievement(item.id, index)
+                        }
+                      >
+                        <TrashIcon />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -618,9 +837,19 @@ export function TailorPage({
       <Card>
         <div className="section-header">
           <h2>Projects</h2>
-          <button className="ai-enhance-button" type="button">
-            AI Rewrite
-          </button>
+          <div className="section-header-actions">
+            <button className="ai-enhance-button" type="button">
+              AI Rewrite
+            </button>
+            <button
+              type="button"
+              className="section-delete-button"
+              aria-label="Clear projects section"
+              onClick={() => clearEntireSection("projects")}
+            >
+              <TrashIcon />
+            </button>
+          </div>
         </div>
         <textarea
           className="textarea inline-edit-textarea"
@@ -634,13 +863,35 @@ export function TailorPage({
       <Card>
         <div className="section-header">
           <h2>Education</h2>
-          <button className="ai-enhance-button" type="button">
-            AI Rewrite
-          </button>
+          <div className="section-header-actions">
+            <button className="ai-enhance-button" type="button">
+              AI Rewrite
+            </button>
+            <button
+              type="button"
+              className="section-delete-button"
+              aria-label="Clear all education"
+              onClick={() => clearEntireSection("education")}
+            >
+              <TrashIcon />
+            </button>
+          </div>
         </div>
         <div className="resume-item-list">
           {educationItems.map((item) => (
             <div className="resume-edit-card" key={item.id}>
+              {activeResume.educationItems?.length ? (
+                <div className="resume-edit-card-header">
+                  <button
+                    type="button"
+                    className="section-delete-button"
+                    aria-label="Remove this education entry"
+                    onClick={() => removeEducationItem(item.id)}
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
+              ) : null}
               <div className="editor-field-grid">
                 <label className="editor-field-label">
                   Degree
@@ -689,9 +940,19 @@ export function TailorPage({
       <Card>
         <div className="section-header">
           <h2>Certifications</h2>
-          <button className="ai-enhance-button" type="button">
-            AI Rewrite
-          </button>
+          <div className="section-header-actions">
+            <button className="ai-enhance-button" type="button">
+              AI Rewrite
+            </button>
+            <button
+              type="button"
+              className="section-delete-button"
+              aria-label="Clear certifications section"
+              onClick={() => clearEntireSection("certifications")}
+            >
+              <TrashIcon />
+            </button>
+          </div>
         </div>
         <textarea
           className="textarea inline-edit-textarea compact-textarea"

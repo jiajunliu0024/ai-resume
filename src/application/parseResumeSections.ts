@@ -57,7 +57,7 @@ Object.entries(headingAliases).forEach(([section, aliases]) => {
 function normalizeResumeText(rawText: string): string {
   return rawText
     .replace(/\r/g, "\n")
-    .replace(/[•●▪]/g, "\n")
+    .replace(/[•●▪∙]/g, "\n")
     .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -223,8 +223,130 @@ function formatBasicInfo(fields: ResumeBasicInfo) {
     .join("\n");
 }
 
+/** Split body text on hollow/filled bullets (PDFs often use ◦). */
+function splitAchievementSegments(text: string): string[] {
+  return text
+    .split(/\s*[◦•●▪∙]\s*/g)
+    .map((segment) => segment.replace(/\s+/g, " ").trim())
+    .filter((segment) => segment.length > 8);
+}
+
+function splitHeadIntoTitleLocation(head: string): { title: string; location: string } {
+  const twoColumn = head.match(/^(.+?)\s{2,}(.+)$/);
+  if (twoColumn) {
+    return { title: twoColumn[1]!.trim(), location: twoColumn[2]!.trim() };
+  }
+
+  const cityTail = head.match(
+    /^(.+?)\s+((?:Melbourne|Sydney|Brisbane|Perth|Adelaide|Global|Remote)(?:\s*,\s*Australia)?)\s*$/i,
+  );
+  if (cityTail) {
+    return { title: cityTail[1]!.trim(), location: cityTail[2]!.trim() };
+  }
+
+  return { title: head.trim(), location: "" };
+}
+
+function isCompanyOnlyStub(item: ResumeExperienceItem): boolean {
+  if (item.dates || item.achievements.length > 0) {
+    return false;
+  }
+
+  if (!item.title || item.title !== item.company) {
+    return false;
+  }
+
+  return item.company.length > 0 && item.company.length < 90;
+}
+
+function mergeStubWithFollowing(
+  stub: ResumeExperienceItem,
+  detail: ResumeExperienceItem,
+): ResumeExperienceItem {
+  const combinedText = [detail.title, detail.location].join(" ").replace(/\s+/g, " ").trim();
+  const dates = detail.dates || extractDates(combinedText);
+  const withoutDates = combinedText.replace(dates, "").replace(/\s+/g, " ").trim();
+  const segments = splitAchievementSegments(withoutDates);
+  const head = (segments[0] ?? withoutDates).trim();
+  const achievements = segments.slice(1);
+
+  const { title: parsedTitle, location: parsedLocation } = splitHeadIntoTitleLocation(head);
+
+  let company = stub.company.trim();
+  if (/^volunteer$/i.test(company)) {
+    const org = combinedText.match(
+      /(?:The\s+)?[A-Z][A-Za-z\s]{2,48}Foundation|[A-Za-z]+\s+Foundation\b/,
+    );
+    if (org) {
+      company = org[0]!.trim();
+    }
+  }
+
+  return {
+    id: stub.id,
+    company,
+    dates,
+    title: parsedTitle,
+    location: parsedLocation,
+    achievements: achievements.length > 0 ? achievements : [],
+  };
+}
+
+function mergeAdjacentCompanyStubs(items: ResumeExperienceItem[]): ResumeExperienceItem[] {
+  const merged: ResumeExperienceItem[] = [];
+  let index = 0;
+
+  while (index < items.length) {
+    const current = items[index]!;
+    const next = items[index + 1];
+
+    if (next && isCompanyOnlyStub(current)) {
+      merged.push(mergeStubWithFollowing(current, next));
+      index += 2;
+      continue;
+    }
+
+    merged.push(current);
+    index += 1;
+  }
+
+  return merged.map((item, itemIndex) => ({
+    ...item,
+    id: `experience-${itemIndex + 1}`,
+  }));
+}
+
+function refineExperienceAchievements(item: ResumeExperienceItem): ResumeExperienceItem {
+  if (item.achievements.length > 0) {
+    return item;
+  }
+
+  const blob = `${item.title} ${item.location}`.replace(/\s+/g, " ").trim();
+  if (!/[◦•]/.test(blob)) {
+    return item;
+  }
+
+  const segments = splitAchievementSegments(blob);
+  if (segments.length < 2) {
+    return item;
+  }
+
+  const dates = item.dates || extractDates(segments[0]!);
+  const head = segments[0]!.replace(dates, "").trim();
+  const achievements = segments.slice(1);
+  const { title, location } = splitHeadIntoTitleLocation(head);
+
+  return {
+    ...item,
+    dates: dates || item.dates,
+    title,
+    location: location || item.location,
+    achievements,
+  };
+}
+
 function parseExperienceItems(sectionText: string): ResumeExperienceItem[] {
-  return splitRoleBlocks(sectionText).map((block, index) => {
+  const draftItems = splitRoleBlocks(sectionText).map((block, index) => {
     const header = block[0] ?? "";
     const secondLine = block[1] ?? "";
     const thirdLine = block[2] ?? "";
@@ -258,6 +380,8 @@ function parseExperienceItems(sectionText: string): ResumeExperienceItem[] {
         .filter((line) => line !== dates && line !== title),
     };
   });
+
+  return mergeAdjacentCompanyStubs(draftItems).map(refineExperienceAchievements);
 }
 
 function parseProjectItems(sectionText: string): ResumeProjectItem[] {
@@ -272,7 +396,91 @@ function parseProjectItems(sectionText: string): ResumeProjectItem[] {
   }));
 }
 
+function parseEducationBulletChunk(chunk: string, index: number): ResumeEducationItem {
+  const dates = extractDates(chunk);
+  const rest = chunk.replace(dates, "").replace(/\s+/g, " ").trim();
+
+  const schoolMatch = rest.match(
+    /((?:The\s+)?University\s+of\s+\w+|Monash University|RMIT(?:\s+University)?|Deakin University|TAFE[\w\s]*)/i,
+  );
+  let school = schoolMatch?.[1]?.trim() ?? "";
+
+  const degreeMatch = rest.match(
+    /\b((?:Master|Bachelor|Doctor(?:ate)?|Graduate\s+Diploma)\s+of\s+[\w\s.'&,]+?)(?=\s+(?:Melbourne|Sydney|Brisbane|Perth|Australia)\b|\s*$)/i,
+  );
+  let degree = degreeMatch?.[1]?.trim() ?? "";
+
+  degree = degree.replace(/\s*(Melbourne,\s*Australia|Australia)\s*$/gi, "").trim();
+
+  if (!degree) {
+    degree = rest
+      .replace(school, "")
+      .replace(/Melbourne,\s*Australia/gi, "")
+      .trim();
+  }
+
+  const details = rest
+    .replace(school, "")
+    .replace(degree, "")
+    .replace(/Melbourne,\s*Australia/gi, "")
+    .trim();
+
+  if (!school && /University|Monash|RMIT|Deakin|TAFE/i.test(rest)) {
+    school = rest
+      .replace(degree, "")
+      .replace(/Melbourne,\s*Australia/gi, "")
+      .trim();
+  }
+
+  return {
+    id: `education-${index + 1}`,
+    degree,
+    school,
+    dates,
+    details,
+  };
+}
+
+/** Joins a lone "The" line with "University of ..." (common PDF line breaks). */
+function joinBrokenSchoolNameLines(lines: string[]): string[] {
+  const out: string[] = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index]!;
+    const next = lines[index + 1];
+
+    if (/^the\s*$/i.test(line) && next && /^university\b/i.test(next)) {
+      out.push(`${line.trim()} ${next.trim()}`);
+      index += 1;
+      continue;
+    }
+
+    out.push(line);
+  }
+
+  return out;
+}
+
 function parseEducationItems(sectionText: string): ResumeEducationItem[] {
+  if (!sectionText.trim()) {
+    return [];
+  }
+
+  const bulletChunks = sectionText
+    .replace(/\r/g, "\n")
+    .replace(/[•●▪]/g, "\n• ")
+    .split(/\n•\s*/)
+    .map((chunk) => chunk.replace(/\s+/g, " ").trim())
+    .filter((chunk) => chunk.length > 8);
+
+  const looksLikeUniBullets =
+    bulletChunks.length >= 2 &&
+    bulletChunks.some((chunk) => /university|monash|bachelor|master|doctor/i.test(chunk));
+
+  if (looksLikeUniBullets) {
+    return bulletChunks.map((chunk, index) => parseEducationBulletChunk(chunk, index));
+  }
+
   const preparedText = sectionText
     .replace(globalDateRangeRegex, "\n$&\n")
     .replace(
@@ -283,10 +491,11 @@ function parseEducationItems(sectionText: string): ResumeEducationItem[] {
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean);
+  const joinedLines = joinBrokenSchoolNameLines(lines);
   const blocks: string[][] = [];
   let currentBlock: string[] = [];
 
-  lines.forEach((line) => {
+  joinedLines.forEach((line) => {
     const startsEducationEntry =
       /^(?:bachelor|master|diploma|certificate|certification|graduate|postgraduate)\b/i.test(
         line,

@@ -10,7 +10,7 @@ import {
 } from "../infrastructure/parser/pdfResumeParser";
 import { parseResumeSections, type ParsedResumeSections } from "./parseResumeSections";
 
-export const CURRENT_RESUME_PARSER_VERSION = "resume-parser-v3-pdf-vision";
+export const CURRENT_RESUME_PARSER_VERSION = "resume-parser-v3-local-merge-v1";
 
 type ParseResumeOptions = {
   apiKey: string;
