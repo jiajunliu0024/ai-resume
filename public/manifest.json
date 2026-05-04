@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Resume Tailor",
+  "description": "Tailor resumes and cover letters from the current job description.",
+  "version": "0.1.0",
+  "action": {},
+  "background": {
+    "service_worker": "assets/background.js",
+    "type": "module"
+  },
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": [
+    "https://api.openai.com/*",
+    "https://api.deepseek.com/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["index.html", "assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

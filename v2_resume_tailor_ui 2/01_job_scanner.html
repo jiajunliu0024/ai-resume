@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+  <title>Resume Tailor - Job Scanner</title>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="icon-btn">☰</button>
+      <div class="brand"><span class="logo">R</span><span>Resume Tailor</span></div>
+      <button class="icon-btn">⚙</button>
+    </header>
+    <div class="steps">
+      <div class="step active"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div>
+      <div class="step-labels"><span class="active">Scan</span><span>Resume</span><span>Tailor</span><span>Letter</span><span>Done</span></div>
+    </div>
+    <main class="content stack">
+      <section class="card soft stack" style="text-align:center; padding:22px 16px;">
+        <div class="tiny-icon" style="font-size:30px;">⌕</div>
+        <h1>Scan Job Page</h1>
+        <p>Extract the role, requirements, keywords, and company context from the active browser tab.</p>
+        <button class="primary">⌕ Scan Job Page</button>
+      </section>
+
+      <section class="stack">
+        <div class="row between">
+          <span class="eyebrow">Extracted Job</span>
+          <button class="ghost">Edit</button>
+        </div>
+        <div class="card stack">
+          <div class="row between">
+            <div>
+              <h2>Senior Product Designer</h2>
+              <p style="color:#0b55a4; font-weight:700;">TechNova Solutions</p>
+            </div>
+            <span class="score">84%</span>
+          </div>
+          <div class="row" style="border-top:1px solid #e3e7f0; padding-top:12px;">
+            <div class="metric"><span>Location</span><span>Remote, US</span></div>
+            <div class="metric"><span>Seniority</span><span>Senior</span></div>
+            <div class="metric"><span>Source</span><span>Active tab</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stack">
+        <div class="row between">
+          <span class="eyebrow">Key Requirements</span>
+          <button class="ghost">Adjust</button>
+        </div>
+        <div class="req-grid">
+          <div class="req"><span class="tiny-icon">▧</span><span>Design systems expertise</span></div>
+          <div class="req"><span class="tiny-icon">◌</span><span>Cross-functional leadership</span></div>
+          <div class="req wide"><span class="tiny-icon">8+</span><span>8+ years in digital product design</span></div>
+          <div class="req"><span class="tiny-icon">◎</span><span>User research and testing</span></div>
+          <div class="req"><span class="tiny-icon">✦</span><span>AI/ML product experience</span></div>
+        </div>
+      </section>
+    </main>
+    <footer class="footer">
+      <button class="primary">Select Resume →</button>
+    </footer>
+  </div>
+</body>
+</html>

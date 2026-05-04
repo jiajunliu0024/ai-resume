@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+  <title>Resume Tailor - Select Resume</title>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="icon-btn">☰</button>
+      <div class="brand"><span class="logo">R</span><span>Resume Tailor</span></div>
+      <button class="icon-btn">⚙</button>
+    </header>
+    <div class="steps">
+      <div class="step done"></div><div class="step active"></div><div class="step"></div><div class="step"></div><div class="step"></div>
+      <div class="step-labels"><span>Scan</span><span class="active">Resume</span><span>Tailor</span><span>Letter</span><span>Done</span></div>
+    </div>
+    <main class="content stack">
+      <section class="stack">
+        <h1>Select Resume</h1>
+        <p>Choose the strongest foundation for the TechNova role. Fit score is based on extracted requirements.</p>
+      </section>
+
+      <section class="card selected-card resume-card">
+        <span class="radio on"></span>
+        <div class="stack" style="gap:8px;">
+          <h2>Product Design Master</h2>
+          <p>Best match for product strategy, design systems, and cross-functional leadership.</p>
+          <div class="row" style="flex-wrap:wrap; gap:6px;">
+            <span class="chip">Design Systems</span>
+            <span class="chip">Leadership</span>
+            <span class="chip">SaaS</span>
+          </div>
+        </div>
+        <span class="fit">86% FIT</span>
+      </section>
+
+      <section class="card resume-card">
+        <span class="radio"></span>
+        <div class="stack" style="gap:8px;">
+          <h2>UX Specialist Resume</h2>
+          <p>Strong on accessibility and mobile UX, weaker on enterprise leadership metrics.</p>
+          <div class="row" style="flex-wrap:wrap; gap:6px;">
+            <span class="chip">WCAG</span>
+            <span class="chip">Research</span>
+          </div>
+        </div>
+        <span class="fit">72% FIT</span>
+      </section>
+
+      <button class="card" style="width:100%; border-style:dashed; min-height:76px; color:#073391; font-weight:800;">＋ Add New Resume</button>
+
+      <section class="card soft stack">
+        <div class="row between">
+          <span class="eyebrow">AI Optimization Preview</span>
+          <span class="fit">Ready</span>
+        </div>
+        <p>Your <strong style="color:#073391;">Product Strategy</strong> and <strong style="color:#073391;">Design Systems</strong> experience match the role. Resume Tailor will emphasize measurable leadership outcomes.</p>
+        <div style="height:8px; border-radius:99px; background:#d8e3f8; overflow:hidden;"><div style="width:86%; height:100%; background:#073391;"></div></div>
+      </section>
+    </main>
+    <footer class="footer">
+      <button class="primary">Optimize This Resume →</button>
+    </footer>
+  </div>
+</body>
+</html>

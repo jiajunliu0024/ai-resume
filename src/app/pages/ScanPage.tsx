@@ -1,0 +1,164 @@
+import { useState } from "react";
+import { type ScanJobPageResult } from "../../application/scanJobPage";
+import { type ExtractedRequirement } from "../../domain/jobDescription";
+import { Card } from "../components/Card";
+import { PrimaryButton } from "../components/PrimaryButton";
+
+// ScanPage is intentionally a presentational component.
+// It receives state and callbacks from App instead of calling Chrome or OpenAI directly.
+type ScanPageProps = {
+  error: string | null;
+  isScanning: boolean;
+  scannedJob: ScanJobPageResult | null;
+  onNext: () => void;
+  onScan: () => void;
+};
+
+export function ScanPage({
+  error,
+  isScanning,
+  scannedJob,
+  onNext,
+  onScan,
+}: ScanPageProps) {
+  const [selectedInsight, setSelectedInsight] =
+    useState<ExtractedRequirement | null>(null);
+
+  function findInsightContext(insight: ExtractedRequirement): string {
+    if (!scannedJob) {
+      return "";
+    }
+
+    const rawText = scannedJob.rawText;
+    const searchTerms = [insight.evidence, insight.text].filter(Boolean);
+    const matchedTerm = searchTerms.find((term) => {
+      return rawText.toLowerCase().includes(term.toLowerCase());
+    });
+
+    if (!matchedTerm) {
+      return insight.evidence || "No matching context found in the JD text.";
+    }
+
+    const matchIndex = rawText.toLowerCase().indexOf(matchedTerm.toLowerCase());
+    const start = Math.max(0, matchIndex - 50);
+    const end = Math.min(rawText.length, matchIndex + matchedTerm.length + 50);
+    const prefix = start > 0 ? "..." : "";
+    const suffix = end < rawText.length ? "..." : "";
+
+    return `${prefix}${rawText.slice(start, end)}${suffix}`;
+  }
+
+  return (
+    <main className="page stack">
+      <Card tone="soft">
+        <div className="center stack">
+          <div className="large-icon">⌕</div>
+          <h1>Scan Job Page</h1>
+          <p>
+            Read the current tab and prepare the job description for keyword
+            extraction.
+          </p>
+          <PrimaryButton type="button" disabled={isScanning} onClick={onScan}>
+            {isScanning ? "Scanning..." : "Scan Current Page"}
+          </PrimaryButton>
+        </div>
+      </Card>
+
+      {error && (
+        <div className="error-box" role="alert">
+          {error}
+        </div>
+      )}
+
+      <Card>
+        <div className="section-header">
+          <span className="eyebrow">Extracted Job</span>
+          {/* Edit is a placeholder for a later manual correction flow. */}
+          <button className="link-button" type="button">
+            Edit
+          </button>
+        </div>
+        <h2>{scannedJob?.title || "Job title will appear here"}</h2>
+        {scannedJob ? (
+          <div className="stack">
+            <p className="company-name">{scannedJob.company}</p>
+            <p className="muted">{scannedJob.sourceUrl}</p>
+            <div className="insight-block">
+              <span className="eyebrow">Key Requirements</span>
+              {/* These requirements come from OpenAI after scan succeeds. */}
+              {scannedJob.requirements.length > 0 ? (
+                <ul className="insight-list">
+                  {scannedJob.requirements.map((requirement) => (
+                    <li key={requirement.id}>
+                      <button
+                        className="insight-button"
+                        type="button"
+                        onClick={() => setSelectedInsight(requirement)}
+                      >
+                        {requirement.text}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="muted">No requirements extracted yet.</p>
+              )}
+            </div>
+
+            <div className="insight-block">
+              <span className="eyebrow">Keywords</span>
+              {/* Keywords are shown as chips because later pages will use them for resume tailoring. */}
+              {scannedJob.keywords.length > 0 ? (
+                <div className="chip-list">
+                  {scannedJob.keywords.map((keyword) => (
+                    <button
+                      className="chip chip-button"
+                      key={keyword.id}
+                      type="button"
+                      onClick={() => setSelectedInsight(keyword)}
+                    >
+                      {keyword.text}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="muted">No keywords extracted yet.</p>
+              )}
+            </div>
+
+          </div>
+        ) : (
+          <p className="muted">
+            Click scan to read text from the active browser tab. AI keyword
+            extraction will be connected in a later step.
+          </p>
+        )}
+      </Card>
+
+      <div className="footer-actions sticky-footer-actions">
+        <PrimaryButton type="button" disabled={!scannedJob} onClick={onNext}>
+          Select Resume
+        </PrimaryButton>
+      </div>
+
+      {selectedInsight && (
+        <div className="modal-backdrop" role="presentation">
+          <section className="context-modal" aria-label="JD context">
+            <div className="section-header">
+              <span className="eyebrow">JD Context</span>
+              <button
+                className="link-button"
+                type="button"
+                onClick={() => setSelectedInsight(null)}
+              >
+                Close
+              </button>
+            </div>
+            <strong>{selectedInsight.text}</strong>
+            <p>{findInsightContext(selectedInsight)}</p>
+          </section>
+        </div>
+      )}
+    </main>
+  );
+}
