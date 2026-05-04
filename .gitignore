@@ -34,3 +34,7 @@ coverage/
 # Local generated scan/debug files
 resume-tailor-scan-*.txt
 ai_retreive.json
+
+# Docs file
+CONVERSATION_SUMMARY.md
+RESUME_AI_PARSE.md

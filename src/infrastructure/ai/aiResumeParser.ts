@@ -40,9 +40,14 @@ const providerConfigs: Record<AiProviderId, AiProviderConfig> = {
   },
 };
 
-/** Multimodal PDF-page parsing is implemented for OpenAI only (vision-capable model). */
+/** Multimodal PDF-page parsing: OpenAI receives rasterized pages only (no extracted PDF text in the request). */
 export function supportsResumePdfVisionParsing(providerId: AiProviderId): boolean {
   return providerId === "openai";
+}
+
+/** DeepSeek path uses extracted PDF plain text + chat completions (same endpoint family as Scan). */
+export function supportsResumeDeepseekTextParsing(providerId: AiProviderId): boolean {
+  return providerId === "deepseek";
 }
 
 const RESUME_JSON_SHAPE_AND_RULES = `Parse these resume page images into this exact JSON shape:
@@ -94,6 +99,58 @@ Rules:
 - Volunteer or unpaid roles may appear in experienceItems; set title or company to reflect volunteer status if shown.
 - If a value is missing, use an empty string or empty array.
 - Do not include markdown or explanation outside the JSON.`;
+
+const RESUME_JSON_SHAPE_AND_RULES_PLAINTEXT = `Parse the following resume plain text into this exact JSON shape:
+{
+  "basicInfo": {
+    "name": "",
+    "email": "",
+    "phone": "",
+    "location": "",
+    "links": []
+  },
+  "summary": "",
+  "skills": [],
+  "experienceItems": [
+    {
+      "title": "",
+      "company": "",
+      "dates": "",
+      "location": "",
+      "achievements": []
+    }
+  ],
+  "projectItems": [
+    {
+      "name": "",
+      "technologies": "",
+      "description": "",
+      "highlights": []
+    }
+  ],
+  "educationItems": [
+    {
+      "degree": "",
+      "school": "",
+      "dates": "",
+      "details": ""
+    }
+  ],
+  "certifications": []
+}
+
+Rules:
+- Read only what appears in the plain text. Do not invent employers, dates, degrees, or metrics.
+- Preserve all real resume content somewhere in the structure.
+- experienceItems: one entry per distinct employment or internship role (merge company line, job title, dates, location, and bullet achievements into a single entry). Do not split one role into multiple entries.
+- Put bullet text and outcomes in achievements arrays (one string per bullet).
+- projectItems: separate named projects/portfolios if they appear as distinct project blocks; otherwise leave empty.
+- educationItems: one entry per degree or program (e.g. one row for Bachelor, one for Master). Keep school and degree fields aligned with the document.
+- Volunteer or unpaid roles may appear in experienceItems; set title or company to reflect volunteer status if shown.
+- If a value is missing, use an empty string or empty array.
+- Do not include markdown or explanation outside the JSON.`;
+
+const MAX_RESUME_PLAINTEXT_CHARS = 120_000;
 
 function makeId(prefix: string, index: number) {
   return `${prefix}-${index + 1}`;
@@ -280,6 +337,81 @@ export async function parseResumeWithAiProviderFromPdfPageImages(
         {
           role: "user",
           content: userContent,
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `${provider.displayName} resume parse failed (${response.status}): ${errorText}`,
+    );
+  }
+
+  const data = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const content = data.choices?.[0]?.message?.content;
+
+  if (!content) {
+    throw new Error(`${provider.displayName} did not return resume JSON.`);
+  }
+
+  return normalizeAiResumeJson(content);
+}
+
+/**
+ * Sends extracted PDF text to DeepSeek chat completions with JSON output.
+ * Used when the user selects DeepSeek and the PDF has selectable text.
+ */
+export async function parseResumeWithAiProviderFromPlainText(
+  resumePlainText: string,
+  apiKey: string,
+  providerId: AiProviderId,
+): Promise<AiParsedResume> {
+  if (providerId !== "deepseek") {
+    throw new Error("Plain-text resume AI parsing is only wired for DeepSeek in this build.");
+  }
+
+  const trimmed = resumePlainText.trim();
+  if (!trimmed) {
+    throw new Error("No resume text to send for AI parsing.");
+  }
+
+  const clipped =
+    trimmed.length > MAX_RESUME_PLAINTEXT_CHARS
+      ? trimmed.slice(0, MAX_RESUME_PLAINTEXT_CHARS)
+      : trimmed;
+
+  const provider = providerConfigs.deepseek;
+  const userMessage = `${RESUME_JSON_SHAPE_AND_RULES_PLAINTEXT}
+
+Resume plain text (from PDF extraction) follows. Page order may be preserved in the text.
+
+---
+
+${clipped}`;
+
+  const response = await fetch(provider.endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: provider.model,
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "You convert resume plain text into strict structured JSON. Return JSON only. Do not invent information.",
+        },
+        {
+          role: "user",
+          content: userMessage,
         },
       ],
     }),

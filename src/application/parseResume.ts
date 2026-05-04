@@ -2,6 +2,8 @@ import { type Resume } from "../domain/resume";
 import { type AiProviderId } from "../infrastructure/ai/openAiJobInsightsExtractor";
 import {
   parseResumeWithAiProviderFromPdfPageImages,
+  parseResumeWithAiProviderFromPlainText,
+  supportsResumeDeepseekTextParsing,
   supportsResumePdfVisionParsing,
 } from "../infrastructure/ai/aiResumeParser";
 import {
@@ -72,22 +74,27 @@ export function isResumeParsed(resume: Resume) {
 }
 
 /**
- * Parses a resume PDF: OpenAI path uses rendered page images only (no extracted text in the AI request).
- * Local fallback uses `extractTextFromPdf` + `parseResumeSections`.
+ * Parses a resume PDF:
+ * - OpenAI + key: rasterized page images → vision chat (extracted text is not sent in that request).
+ * - DeepSeek + key: extracted plain text → chat JSON parse (same provider API as Scan).
+ * - Otherwise: `extractTextFromPdf` + local `parseResumeSections`.
  */
 export async function parseResume(
   title: string,
   file: File,
   options: ParseResumeOptions,
 ): Promise<Resume> {
-  const useVision =
-    Boolean(options.apiKey.trim()) && supportsResumePdfVisionParsing(options.aiProvider);
+  const apiKeyTrimmed = options.apiKey.trim();
+  const useOpenAiVision =
+    Boolean(apiKeyTrimmed) && supportsResumePdfVisionParsing(options.aiProvider);
+  const useDeepseekTextAi =
+    Boolean(apiKeyTrimmed) && supportsResumeDeepseekTextParsing(options.aiProvider);
 
   const textPromise = extractTextFromPdf(file)
     .then((text) => text.trim())
     .catch(() => "");
 
-  const imagesPromise = useVision
+  const imagesPromise = useOpenAiVision
     ? renderPdfPagesToImageDataUrls(file, {
         maxPages: 12,
         maxWidthPx: 1400,
@@ -98,23 +105,37 @@ export async function parseResume(
 
   const [rawText, pageImages] = await Promise.all([textPromise, imagesPromise]);
 
-  if (useVision && pageImages.length) {
+  if (useOpenAiVision && pageImages.length) {
     try {
       const aiSections = await parseResumeWithAiProviderFromPdfPageImages(
         pageImages,
-        options.apiKey.trim(),
+        apiKeyTrimmed,
         "openai",
       );
 
       return buildResume(title, rawText, aiSections, "ai");
     } catch (error) {
-      console.warn("AI resume parsing failed; falling back locally.", error);
+      console.warn("OpenAI resume vision parsing failed; falling back.", error);
+    }
+  }
+
+  if (useDeepseekTextAi && rawText.trim()) {
+    try {
+      const aiSections = await parseResumeWithAiProviderFromPlainText(
+        rawText,
+        apiKeyTrimmed,
+        "deepseek",
+      );
+
+      return buildResume(title, rawText, aiSections, "ai");
+    } catch (error) {
+      console.warn("DeepSeek resume text parsing failed; falling back locally.", error);
     }
   }
 
   if (!rawText.trim()) {
     throw new Error(
-      "Could not read text from this PDF and AI vision parsing did not succeed. Try OpenAI with a valid API key, or use a PDF with selectable text.",
+      "Could not read text from this PDF and no AI parse succeeded. Use a PDF with selectable text, or try OpenAI (vision) / DeepSeek (text) with a valid API key.",
     );
   }
 

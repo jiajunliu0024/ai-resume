@@ -90,6 +90,9 @@ export function ScanPage({
                 <ul className="insight-list">
                   {scannedJob.requirements.map((requirement) => (
                     <li key={requirement.id}>
+                      <span className="insight-list-bullet" aria-hidden="true">
+                        •
+                      </span>
                       <button
                         className="insight-button"
                         type="button"

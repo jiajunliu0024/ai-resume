@@ -2,9 +2,16 @@
  * Normalizes bullet lists under experience entries (local + AI parsers often repeat lines).
  */
 
+/**
+ * Soft key: ignores trailing `.` / `!` / `?` so PDF line-wrap duplicates like
+ * "…Hub" vs "…Hub." collapse to one entry (common in local `parseResumeSections`).
+ */
+function achievementSoftDedupeKey(line: string): string {
+  return line.replace(/\s+/g, " ").trim().toLowerCase().replace(/[.!?]+$/u, "").trim();
+}
+
 export function dedupeAchievementList(items: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
+  const bySoftKey = new Map<string, string>();
 
   for (const raw of items) {
     const norm = raw.replace(/\s+/g, " ").trim();
@@ -12,16 +19,27 @@ export function dedupeAchievementList(items: string[]): string[] {
       continue;
     }
 
-    const key = norm.toLowerCase();
-    if (seen.has(key)) {
+    const exactKey = norm.toLowerCase();
+    if ([...bySoftKey.values()].some((kept) => kept.toLowerCase() === exactKey)) {
       continue;
     }
 
-    seen.add(key);
-    out.push(norm);
+    const softKey = achievementSoftDedupeKey(norm);
+    const previous = bySoftKey.get(softKey);
+
+    if (!previous) {
+      bySoftKey.set(softKey, norm);
+      continue;
+    }
+
+    const pickLonger =
+      norm.length > previous.length || (norm.endsWith(".") && !previous.endsWith("."));
+    if (pickLonger) {
+      bySoftKey.set(softKey, norm);
+    }
   }
 
-  return out;
+  return [...bySoftKey.values()];
 }
 
 export function stripAchievementTrailingRoleLine(

@@ -1,4 +1,13 @@
+/**
+ * Injected via `chrome.scripting.executeScript` as a single file. Do not import other modules
+ * here — Vite would emit extra chunks and top-level `import`, which breaks injection on many pages.
+ * Keep in sync with `src/shared/floatingWidgetMessages.ts`.
+ */
+const RESUME_TAILOR_MINIMIZE_PANEL = "RESUME_TAILOR_MINIMIZE_PANEL" as const;
+
 const widgetRootId = "resume-tailor-floating-widget";
+
+let detachFloatingWidgetMessageListener: (() => void) | null = null;
 
 function createStyles(): HTMLStyleElement {
   const style = document.createElement("style");
@@ -52,55 +61,9 @@ function createStyles(): HTMLStyleElement {
       box-shadow: 0 20px 50px rgb(16 24 40 / 22%);
     }
 
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 16px;
-      border-bottom: 1px solid #eef2f7;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #172033;
-      font-size: 20px;
-      font-weight: 800;
-    }
-
-    .brand-mark {
-      display: grid;
-      width: 28px;
-      height: 28px;
-      place-items: center;
-      border-radius: 8px;
-      color: #ffffff;
-      background: #2fb8d4;
-      font-size: 18px;
-      font-weight: 900;
-      transform: rotate(-28deg);
-    }
-
-    .close-button {
-      display: grid;
-      width: 32px;
-      height: 32px;
-      place-items: center;
-      border: 0;
-      border-radius: 999px;
-      color: #667085;
-      background: transparent;
-      font-size: 24px;
-      cursor: pointer;
-    }
-
-    .close-button:hover {
-      background: #f2f4f7;
-    }
-
     .app-frame {
+      position: relative;
+      z-index: 1;
       flex: 1;
       width: 100%;
       min-height: 0;
@@ -113,6 +76,8 @@ function createStyles(): HTMLStyleElement {
 }
 
 function createWidget() {
+  detachFloatingWidgetMessageListener?.();
+  detachFloatingWidgetMessageListener = null;
   document.getElementById(widgetRootId)?.remove();
 
   const host = document.createElement("div");
@@ -123,6 +88,9 @@ function createWidget() {
   const launcher = document.createElement("button");
   const panel = document.createElement("section");
 
+  const appUrl = new URL(chrome.runtime.getURL("index.html"));
+  appUrl.searchParams.set("embed", "floating-widget");
+
   launcher.className = "launcher";
   launcher.type = "button";
   launcher.setAttribute("aria-label", "Open Resume Tailor");
@@ -130,41 +98,68 @@ function createWidget() {
 
   panel.className = "panel";
   panel.innerHTML = `
-    <header class="header">
-      <div class="brand">
-        <span class="brand-mark">R</span>
-        <span>Resume Tailor</span>
-      </div>
-      <button class="close-button" type="button" aria-label="Close Resume Tailor">×</button>
-    </header>
     <iframe
       class="app-frame"
       title="Resume Tailor"
-      src="${chrome.runtime.getURL("index.html")}"
+      src="${appUrl.href}"
     ></iframe>
   `;
 
-  launcher.hidden = true;
+  panel.hidden = true;
+  launcher.hidden = false;
 
-  launcher.addEventListener("click", () => {
+  function openPanel() {
     panel.hidden = false;
     launcher.hidden = true;
-  });
+  }
 
-  panel.querySelector(".close-button")?.addEventListener("click", () => {
+  function closePanel(event?: Event) {
+    event?.preventDefault();
+    event?.stopPropagation();
     panel.hidden = true;
     launcher.hidden = false;
+  }
+
+  launcher.addEventListener("click", () => {
+    openPanel();
   });
+
+  const appFrame = panel.querySelector("iframe.app-frame");
+  if (!(appFrame instanceof HTMLIFrameElement)) {
+    throw new Error("resume-tailor-floating-widget: app iframe not found");
+  }
+  const appIframe: HTMLIFrameElement = appFrame;
+
+  const extensionOrigin = new URL(chrome.runtime.getURL("/")).origin;
+
+  function onWindowMessage(event: MessageEvent) {
+    if (event.source !== appIframe.contentWindow) {
+      return;
+    }
+    if (event.origin !== extensionOrigin) {
+      return;
+    }
+    if (event.data?.type !== RESUME_TAILOR_MINIMIZE_PANEL) {
+      return;
+    }
+    closePanel();
+  }
+
+  window.addEventListener("message", onWindowMessage);
+  detachFloatingWidgetMessageListener = () => {
+    window.removeEventListener("message", onWindowMessage);
+  };
 
   chrome.runtime.onMessage.addListener((message) => {
     if (message?.type !== "RESUME_TAILOR_TOGGLE_WIDGET") {
       return;
     }
 
-    const shouldOpen = panel.hidden;
-
-    panel.hidden = !shouldOpen;
-    launcher.hidden = shouldOpen;
+    if (panel.hidden) {
+      openPanel();
+    } else {
+      closePanel();
+    }
   });
 
   shadowRoot.append(style, launcher, panel);

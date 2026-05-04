@@ -1,3 +1,4 @@
+import { useState, type ChangeEvent } from "react";
 import {
   type Resume,
   type ResumeBasicInfo,
@@ -7,15 +8,27 @@ import {
 import { parseResumeSections } from "../../application/parseResumeSections";
 import { finalizeExperienceAchievements } from "../../shared/experienceAchievements";
 import { type ScanJobPageResult } from "../../application/scanJobPage";
+import { type AiProviderId } from "../../infrastructure/ai/openAiJobInsightsExtractor";
 import { Card } from "../components/Card";
 import { PrimaryButton } from "../components/PrimaryButton";
+import {
+  TailorAiRewriterDialog,
+  type TailorAiRewriteOpenPayload,
+} from "../components/TailorAiRewriterDialog";
 import { getVisibleTailorSections } from "./tailorSectionModel";
 import { TailorSectionPanels } from "./TailorSectionPanels";
+import { TailorResumePdfPreviewModal } from "../components/TailorResumePdfPreviewModal";
+import { TailorTailoredPdfPreviewModal } from "../components/TailorTailoredPdfPreviewModal";
+import type { GenerateResumePdfInput, ResumePdfTemplateId } from "../../infrastructure/pdf/resumePdfTypes";
+import { isResumePdfTemplateId, RESUME_PDF_TEMPLATES } from "../../infrastructure/pdf/resumePdfTypes";
 
 type TailorPageProps = {
+  apiKey: string;
+  aiProvider: AiProviderId;
   job: ScanJobPageResult | null;
   resume: Resume | null;
   onBack: () => void;
+  onOpenSettings: () => void;
   onNext: () => void;
   onResumeChange: (resume: Resume) => void;
 };
@@ -225,13 +238,22 @@ function buildParsedResumeDebugJson(resume: Resume) {
 }
 
 export function TailorPage({
+  apiKey,
+  aiProvider,
   job,
   resume,
   onBack,
+  onOpenSettings,
   onNext,
   onResumeChange,
 }: TailorPageProps) {
   const activeResume = enrichResumeSections(resume);
+  const hasApiKey = Boolean(apiKey.trim());
+  const [rewriterPayload, setRewriterPayload] = useState<TailorAiRewriteOpenPayload | null>(null);
+  const [bundledTemplatePreviewOpen, setBundledTemplatePreviewOpen] = useState(false);
+  const [tailoredPdfPreviewOpen, setTailoredPdfPreviewOpen] = useState(false);
+  const [tailoredPdfLayout, setTailoredPdfLayout] = useState<ResumePdfTemplateId>("professional");
+  const [tailoredPdfBusy, setTailoredPdfBusy] = useState(false);
   const matchKeywords = getKeywordTexts(job).slice(0, 8);
   const basicInfoFields =
     activeResume?.basicInfoFields ?? parseBasicInfoFallback(activeResume?.basicInfo);
@@ -244,6 +266,79 @@ export function TailorPage({
   const visibleTailorSections = activeResume
     ? getVisibleTailorSections(activeResume, selectedSkills)
     : [];
+
+  const pdfInput: GenerateResumePdfInput | null = activeResume
+    ? {
+        resume: activeResume,
+        basicInfo: basicInfoFields,
+        educationItems,
+        selectedSkills,
+      }
+    : null;
+
+  function handleTailoredLayoutChange(event: ChangeEvent<HTMLSelectElement>) {
+    const next = event.target.value;
+    if (isResumePdfTemplateId(next)) {
+      setTailoredPdfLayout(next);
+    }
+  }
+
+  async function handleDownloadTailoredPdf() {
+    if (!pdfInput) {
+      return;
+    }
+
+    setTailoredPdfBusy(true);
+    try {
+      const { generateResumePdfBlob } = await import("../../infrastructure/pdf/generateResumePdf");
+      const blob = await generateResumePdfBlob(pdfInput, tailoredPdfLayout);
+      const url = URL.createObjectURL(blob);
+      const raw = pdfInput.basicInfo.name.trim() || pdfInput.resume.title || "resume";
+      const slug = raw
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 48);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${slug || "resume"}-${tailoredPdfLayout}.pdf`;
+      anchor.rel = "noopener";
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setTailoredPdfBusy(false);
+    }
+  }
+
+  function handleOpenAiRewrite(payload: TailorAiRewriteOpenPayload) {
+    if (!apiKey.trim()) {
+      onOpenSettings();
+      return;
+    }
+
+    setRewriterPayload(payload);
+  }
+
+  function handleCloseRewriter() {
+    setRewriterPayload(null);
+  }
+
+  function handleApplyRewriter(rewritten: string) {
+    if (!rewriterPayload) {
+      return;
+    }
+
+    if (rewriterPayload.kind === "summary") {
+      updateResumeSection("summary", rewritten);
+    } else {
+      updateExperienceAchievement(
+        rewriterPayload.itemId,
+        rewriterPayload.achievementIndex,
+        rewritten,
+      );
+    }
+
+    handleCloseRewriter();
+  }
 
   function saveResume(nextResume: Resume) {
     onResumeChange({
@@ -554,6 +649,7 @@ export function TailorPage({
   }
 
   return (
+    <>
     <main className="page stack">
       <header className="tailor-hero">
         <div>
@@ -565,6 +661,28 @@ export function TailorPage({
         </div>
         <span className="score-pill">{displayedScore}%</span>
       </header>
+
+      {!hasApiKey ? (
+        <Card tone="soft">
+          <span className="eyebrow">API key required</span>
+          <p>
+            Add your API key in Settings to continue to the cover letter step and to use
+            provider-backed features. If this resume was parsed before you saved a key, go back
+            to Resume, add your key, and upload the PDF again for AI parsing.
+          </p>
+          <PrimaryButton type="button" variant="secondary" onClick={onOpenSettings}>
+            Open Settings
+          </PrimaryButton>
+        </Card>
+      ) : activeResume.parseSource === "local" ? (
+        <Card tone="soft">
+          <span className="eyebrow">Local parse</span>
+          <p className="helper-text">
+            This resume was structured with local rules only. For AI-extracted sections, return
+            to Resume and re-upload the PDF with your API key and provider selected.
+          </p>
+        </Card>
+      ) : null}
 
       <Card tone="soft">
         <span className="eyebrow">Match Improvements</span>
@@ -587,6 +705,8 @@ export function TailorPage({
         basicInfoFields={basicInfoFields}
         selectedSkills={selectedSkills}
         educationItems={educationItems}
+        hasApiKey={hasApiKey}
+        onOpenAiRewrite={handleOpenAiRewrite}
         updateBasicInfoField={updateBasicInfoField}
         updateBasicInfoLinks={updateBasicInfoLinks}
         updateResumeSection={updateResumeSection}
@@ -612,14 +732,103 @@ export function TailorPage({
         </details>
       </Card>
 
+      <Card>
+        <h2 className="tailor-pdf-trigger-title">Résumé PDF</h2>
+        <p className="helper-text">
+          <strong>Preview resume</strong> opens your tailored PDF (same @react-pdf output as
+          download). <strong>Download tailored PDF</strong> saves that file. Optional: preview a
+          static bundled template file for layout reference.
+        </p>
+        <div className="tailor-pdf-card-actions">
+          <div className="tailor-pdf-tailored-row">
+            <label className="field-label" htmlFor="tailor-tailored-pdf-layout">
+              Data layout
+            </label>
+            <select
+              id="tailor-tailored-pdf-layout"
+              className="text-input tailor-pdf-template-select"
+              value={tailoredPdfLayout}
+              onChange={handleTailoredLayoutChange}
+            >
+              {RESUME_PDF_TEMPLATES.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="button primary"
+              disabled={!pdfInput}
+              onClick={() => setTailoredPdfPreviewOpen(true)}
+            >
+              Preview resume
+            </button>
+            <button
+              type="button"
+              className="button secondary"
+              disabled={!pdfInput || tailoredPdfBusy}
+              onClick={() => void handleDownloadTailoredPdf()}
+            >
+              {tailoredPdfBusy ? "Preparing…" : "Download tailored PDF"}
+            </button>
+            <button
+              type="button"
+              className="link-button tailor-pdf-bundled-link"
+              onClick={() => setBundledTemplatePreviewOpen(true)}
+            >
+              Preview bundled template file…
+            </button>
+          </div>
+        </div>
+      </Card>
+
       <div className="footer-actions two-columns">
         <PrimaryButton type="button" variant="secondary" onClick={onBack}>
           Back
         </PrimaryButton>
-        <PrimaryButton type="button" onClick={onNext}>
-          Generate Cover Letter &gt;
+        <PrimaryButton type="button" disabled={!hasApiKey} onClick={onNext}>
+          Cover letter &gt;
         </PrimaryButton>
       </div>
     </main>
+
+    {bundledTemplatePreviewOpen ? (
+      <TailorResumePdfPreviewModal
+        open={bundledTemplatePreviewOpen}
+        onClose={() => setBundledTemplatePreviewOpen(false)}
+      />
+    ) : null}
+
+    {tailoredPdfPreviewOpen ? (
+      <TailorTailoredPdfPreviewModal
+        open={tailoredPdfPreviewOpen}
+        onClose={() => setTailoredPdfPreviewOpen(false)}
+        input={pdfInput}
+        inputVersion={activeResume?.updatedAt ?? ""}
+        layoutId={tailoredPdfLayout}
+        onLayoutChange={setTailoredPdfLayout}
+        onDownloadTailored={() => void handleDownloadTailoredPdf()}
+        downloadBusy={tailoredPdfBusy}
+      />
+    ) : null}
+
+    {rewriterPayload ? (
+      <TailorAiRewriterDialog
+        key={
+          rewriterPayload.kind === "summary"
+            ? "rewrite-summary"
+            : `rewrite-${rewriterPayload.itemId}-${rewriterPayload.achievementIndex}`
+        }
+        job={job}
+        context={rewriterPayload}
+        apiKey={apiKey}
+        aiProvider={aiProvider}
+        onClose={handleCloseRewriter}
+        onApply={handleApplyRewriter}
+        onOpenSettings={onOpenSettings}
+      />
+    ) : null}
+    </>
   );
 }

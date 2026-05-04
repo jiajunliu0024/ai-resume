@@ -10,7 +10,7 @@ import {
 import { chromeStorageRepository } from "../infrastructure/storage/chromeStorageRepository";
 import { storageKeys } from "../shared/storageKeys";
 import { SettingsPanel } from "./components/SettingsPanel";
-import { Topbar } from "./components/Topbar";
+import { AppHeader } from "./components/AppHeader";
 import { StepProgress } from "./components/StepProgress";
 import { ScanPage } from "./pages/ScanPage";
 import { ResumePage } from "./pages/ResumePage";
@@ -22,6 +22,9 @@ import { ResultsPage } from "./pages/ResultsPage";
 type AppStep = "scan" | "resume" | "tailor" | "results";
 
 const steps: AppStep[] = ["scan", "resume", "tailor", "results"];
+
+const embeddedInFloatingWidget =
+  new URLSearchParams(window.location.search).get("embed") === "floating-widget";
 
 export function App() {
   // currentStep controls which page is visible in the three-step flow.
@@ -245,7 +248,10 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <Topbar onMenuClick={() => setSettingsOpen(true)} />
+      <AppHeader
+        onOpenSettings={() => setSettingsOpen(true)}
+        embeddedInFloatingWidget={embeddedInFloatingWidget}
+      />
       <StepProgress currentStepIndex={currentStepIndex} />
 
       {settingsOpen && (
@@ -286,15 +292,19 @@ export function App() {
           onResumesAdd={handleResumesAdd}
           onResumeDelete={handleResumeDelete}
           onResumeSelect={handleResumeSelect}
+          onOpenSettings={() => setSettingsOpen(true)}
           onNext={() => setCurrentStep("tailor")}
         />
       )}
 
       {currentStep === "tailor" && (
         <TailorPage
+          apiKey={apiKey}
+          aiProvider={aiProvider}
           job={scannedJob}
           resume={currentResume}
           onBack={() => setCurrentStep("resume")}
+          onOpenSettings={() => setSettingsOpen(true)}
           onResumeChange={handleResumeChange}
           onNext={() => setCurrentStep("results")}
         />

@@ -1,7 +1,6 @@
-import * as pdfjsLib from "pdfjs-dist";
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.mjs?url";
+import { ensurePdfJsWorker, pdfjsLib } from "../pdf/pdfjsSetup";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+ensurePdfJsWorker();
 
 function isTextItem(item: unknown): item is { str: string } {
   return (

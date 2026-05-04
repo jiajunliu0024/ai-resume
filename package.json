@@ -12,6 +12,7 @@
     "verify": "npm run lint && npm run typecheck && vite build"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.5.1",
     "@vitejs/plugin-react": "latest",
     "pdfjs-dist": "^5.7.284",
     "react": "latest",

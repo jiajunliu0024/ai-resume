@@ -2,7 +2,10 @@ import { type ChangeEvent, useState } from "react";
 import { parseResume } from "../../application/parseResume";
 import { type Resume } from "../../domain/resume";
 import { type AiProviderId } from "../../infrastructure/ai/openAiJobInsightsExtractor";
-import { supportsResumePdfVisionParsing } from "../../infrastructure/ai/aiResumeParser";
+import {
+  supportsResumeDeepseekTextParsing,
+  supportsResumePdfVisionParsing,
+} from "../../infrastructure/ai/aiResumeParser";
 import { Card } from "../components/Card";
 import { PrimaryButton } from "../components/PrimaryButton";
 
@@ -16,6 +19,7 @@ type ResumePageProps = {
   onResumesAdd: (resumes: Resume[]) => void;
   onResumeDelete: (resumeId: string) => void;
   onResumeSelect: (resumeId: string) => void;
+  onOpenSettings: () => void;
   onNext: () => void;
 };
 
@@ -29,16 +33,25 @@ export function ResumePage({
   onResumesAdd,
   onResumeDelete,
   onResumeSelect,
+  onOpenSettings,
   onNext,
 }: ResumePageProps) {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isParsingPdf, setIsParsingPdf] = useState(false);
   const [parseMessage, setParseMessage] = useState<string | null>(null);
 
+  const hasApiKey = Boolean(apiKey.trim());
+
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? []);
 
     if (!files.length) {
+      return;
+    }
+
+    if (!hasApiKey) {
+      setUploadError("Add your API key in Settings (menu, top right) before uploading a resume.");
+      event.target.value = "";
       return;
     }
 
@@ -56,11 +69,11 @@ export function ResumePage({
     setIsParsingPdf(true);
     setUploadError(null);
     setParseMessage(
-      apiKey.trim() && supportsResumePdfVisionParsing(aiProvider)
+      supportsResumePdfVisionParsing(aiProvider)
         ? "Rendering PDF pages and sending images to OpenAI (no extracted text in the AI request)..."
-        : apiKey.trim()
-          ? "Extracting PDF text and using local parser (OpenAI required for PDF vision AI parse)..."
-          : "Extracting PDF text and using local fallback parser...",
+        : supportsResumeDeepseekTextParsing(aiProvider)
+          ? "Extracting PDF text and sending it to DeepSeek for structured JSON (your key, provider API only)..."
+          : "Extracting PDF text and using local parser...",
     );
 
     try {
@@ -101,6 +114,19 @@ export function ResumePage({
         </p>
         {jobTitle && <p className="company-name">For: {jobTitle}</p>}
       </section>
+
+      {!hasApiKey ? (
+        <Card tone="soft">
+          <span className="eyebrow">API key required</span>
+          <p>
+            Paste your provider API key in Settings before uploading PDFs. Parsing and tailoring
+            use your key to call the provider directly from this extension.
+          </p>
+          <PrimaryButton type="button" variant="secondary" onClick={onOpenSettings}>
+            Open Settings
+          </PrimaryButton>
+        </Card>
+      ) : null}
 
       {resumes.map((resumeItem) => {
         const isSelected = resumeItem.id === resume?.id;
@@ -150,8 +176,8 @@ export function ResumePage({
 
       <Card>
         <label
-          className={`upload-box ${isParsingPdf ? "loading" : ""}`}
-          htmlFor={isParsingPdf ? undefined : "resume-file"}
+          className={`upload-box ${isParsingPdf ? "loading" : ""} ${!hasApiKey && !isParsingPdf ? "upload-box-disabled" : ""}`}
+          htmlFor={isParsingPdf || !hasApiKey ? undefined : "resume-file"}
         >
           <span className="upload-icon">
             {isParsingPdf ? <span className="spinner" aria-hidden="true" /> : "+"}
@@ -160,10 +186,14 @@ export function ResumePage({
             <strong>{isParsingPdf ? "Parsing Resume" : "Add Resumes"}</strong>
             <small>
               {isParsingPdf
-                ? apiKey.trim() && supportsResumePdfVisionParsing(aiProvider)
+                ? supportsResumePdfVisionParsing(aiProvider)
                   ? "Rendering PDF pages → OpenAI vision (JSON)"
-                  : "Local text extraction + rule-based parsing"
-                : "Multiple PDFs supported"}
+                  : supportsResumeDeepseekTextParsing(aiProvider)
+                    ? "PDF text → DeepSeek structured parse (JSON)"
+                    : "Local text extraction + rule-based parsing"
+                : hasApiKey
+                  ? "Multiple PDFs supported"
+                  : "Add an API key in Settings to enable upload"}
             </small>
           </span>
         </label>
@@ -173,7 +203,7 @@ export function ResumePage({
           type="file"
           multiple
           accept=".pdf,application/pdf"
-          disabled={isParsingPdf}
+          disabled={isParsingPdf || !hasApiKey}
           onChange={handleFileChange}
         />
         {resume?.title && <p className="helper-text">Selected: {resume.title}</p>}
@@ -204,10 +234,10 @@ export function ResumePage({
         </PrimaryButton>
         <PrimaryButton
           type="button"
-          disabled={isParsingPdf || !resume?.rawText.trim()}
+          disabled={isParsingPdf || !resume?.rawText.trim() || !hasApiKey}
           onClick={onNext}
         >
-          {isParsingPdf ? "Parsing..." : "Tailor Resume"}
+          {isParsingPdf ? "Parsing..." : !hasApiKey ? "Add API Key to Continue" : "Tailor Resume"}
         </PrimaryButton>
       </div>
     </main>

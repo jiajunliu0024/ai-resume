@@ -23,13 +23,13 @@ type OpenAiJobInsightsResponse = {
 
 export type AiProviderId = "openai" | "deepseek";
 
-type AiProviderConfig = {
+export type AiProviderChatCompletionConfig = {
   displayName: string;
   endpoint: string;
   model: string;
 };
 
-const providerConfigs: Record<AiProviderId, AiProviderConfig> = {
+const providerConfigs: Record<AiProviderId, AiProviderChatCompletionConfig> = {
   openai: {
     displayName: "OpenAI",
     endpoint: "https://api.openai.com/v1/chat/completions",
@@ -41,6 +41,12 @@ const providerConfigs: Record<AiProviderId, AiProviderConfig> = {
     model: "deepseek-chat",
   },
 };
+
+export function getAiProviderChatCompletionConfig(
+  providerId: AiProviderId,
+): AiProviderChatCompletionConfig {
+  return providerConfigs[providerId];
+}
 
 // Only these categories are allowed in our domain model.
 // If OpenAI returns something else, we normalize it to "other".

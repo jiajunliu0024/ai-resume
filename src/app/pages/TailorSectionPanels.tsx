@@ -5,6 +5,7 @@ import {
   type ResumeBasicInfo,
   type ResumeEducationItem,
 } from "../../domain/resume";
+import type { TailorAiRewriteOpenPayload } from "../components/TailorAiRewriterDialog";
 import {
   type TailorSectionId,
   TAILOR_SECTION_LABELS,
@@ -59,6 +60,8 @@ export type TailorSectionPanelsProps = {
   basicInfoFields: ResumeBasicInfo;
   selectedSkills: string[];
   educationItems: ResumeEducationItem[];
+  hasApiKey: boolean;
+  onOpenAiRewrite: (payload: TailorAiRewriteOpenPayload) => void;
   updateBasicInfoField: (
     field: "name" | "email" | "phone" | "location",
     value: string,
@@ -117,6 +120,8 @@ export function TailorSectionPanels({
   basicInfoFields,
   selectedSkills,
   educationItems,
+  hasApiKey,
+  onOpenAiRewrite,
   updateBasicInfoField,
   updateBasicInfoLinks,
   updateResumeSection,
@@ -614,18 +619,49 @@ export function TailorSectionPanels({
         }
 
         if (sectionId === "summary") {
+          const summaryText = activeResume.summary?.trim() ?? "";
+
           return (
             <Card key={sectionId}>
               <div className="section-header">
                 <h2>{label}</h2>
-                {headerActions}
+                <div className="section-header-actions">
+                  {hasApiKey && summaryText ? (
+                    <button
+                      type="button"
+                      className="section-edit-button"
+                      aria-label="Open AI rewriter for summary"
+                      onClick={() =>
+                        onOpenAiRewrite({ kind: "summary", originalText: activeResume.summary ?? "" })
+                      }
+                    >
+                      AI Rewrite
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="icon-only-button"
+                    aria-label={`Edit ${label}`}
+                    onClick={() => setModal({ kind: "section", section: "summary" })}
+                  >
+                    <PencilIcon />
+                  </button>
+                  <button
+                    type="button"
+                    className="section-delete-button"
+                    aria-label={`Clear ${label}`}
+                    onClick={() => clearEntireSection("summary")}
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
               </div>
               <div
                 className="tailor-section-preview preview-text tailor-preview-snippet"
-                title={activeResume.summary?.trim() ?? ""}
+                title={summaryText}
               >
-                {activeResume.summary?.trim() ? (
-                  previewSnippet(activeResume.summary, 280)
+                {summaryText ? (
+                  previewSnippet(activeResume.summary ?? "", 280)
                 ) : (
                   <span className="muted">Empty summary.</span>
                 )}
@@ -682,12 +718,30 @@ export function TailorSectionPanels({
                         {item.achievements.length ? (
                           <ul className="tailor-achievement-snippet-list">
                             {item.achievements.map((achievement, index) => (
-                              <li
-                                key={`${item.id}-a-${index}`}
-                                className="tailor-achievement-snippet"
-                                title={achievement}
-                              >
-                                {previewSnippet(achievement, ACHIEVEMENT_SNIPPET_LEN)}
+                              <li key={`${item.id}-a-${index}`} className="tailor-achievement-snippet-row">
+                                <span
+                                  className="tailor-achievement-snippet"
+                                  title={achievement}
+                                >
+                                  {previewSnippet(achievement, ACHIEVEMENT_SNIPPET_LEN)}
+                                </span>
+                                {hasApiKey ? (
+                                  <button
+                                    type="button"
+                                    className="section-edit-button tailor-achievement-ai-rewrite"
+                                    aria-label="Open AI rewriter for this bullet"
+                                    onClick={() =>
+                                      onOpenAiRewrite({
+                                        kind: "experienceAchievement",
+                                        itemId: item.id,
+                                        achievementIndex: index,
+                                        originalText: achievement,
+                                      })
+                                    }
+                                  >
+                                    AI Rewrite
+                                  </button>
+                                ) : null}
                               </li>
                             ))}
                           </ul>
