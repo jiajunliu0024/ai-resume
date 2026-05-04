@@ -4,6 +4,7 @@ import {
   type ResumeExperienceItem,
   type ResumeProjectItem,
 } from "../../domain/resume";
+import { finalizeExperienceAchievements } from "../../shared/experienceAchievements";
 import { type AiProviderId } from "./openAiJobInsightsExtractor";
 
 export type AiParsedResume = {
@@ -169,13 +170,20 @@ function normalizeAiResumeJson(content: string): AiParsedResume {
     ? parsed.experienceItems.map((item, index) => {
         const entry = item as Record<string, unknown>;
 
+        const title = normalizeString(entry.title);
+        const location = normalizeString(entry.location);
+
         return {
           id: normalizeString(entry.id) || makeId("experience", index),
-          title: normalizeString(entry.title),
+          title,
           company: normalizeString(entry.company),
           dates: normalizeString(entry.dates),
-          location: normalizeString(entry.location),
-          achievements: normalizeStringArray(entry.achievements),
+          location,
+          achievements: finalizeExperienceAchievements(
+            normalizeStringArray(entry.achievements),
+            title,
+            location,
+          ),
         };
       })
     : [];

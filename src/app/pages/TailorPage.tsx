@@ -5,9 +5,12 @@ import {
   type ResumeExperienceItem,
 } from "../../domain/resume";
 import { parseResumeSections } from "../../application/parseResumeSections";
+import { finalizeExperienceAchievements } from "../../shared/experienceAchievements";
 import { type ScanJobPageResult } from "../../application/scanJobPage";
 import { Card } from "../components/Card";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { getVisibleTailorSections } from "./tailorSectionModel";
+import { TailorSectionPanels } from "./TailorSectionPanels";
 
 type TailorPageProps = {
   job: ScanJobPageResult | null;
@@ -161,46 +164,45 @@ function enrichResumeSections(resume: Resume | null) {
     return null;
   }
 
-  const shouldReparseExperience = !resume.experienceItems?.length;
+  const parsedSections = parseResumeSections(resume.rawText);
+
+  const experienceItemsRaw =
+    resume.experienceItems?.length ? resume.experienceItems : parsedSections.experienceItems;
+
+  const experienceItems = experienceItemsRaw.map((item) => ({
+    ...item,
+    achievements: finalizeExperienceAchievements(
+      item.achievements,
+      item.title,
+      item.location,
+    ),
+  }));
+
+  const nextExperienceString = resume.experienceItems?.length
+    ? formatExperienceItems(experienceItems)
+    : resume.experience || parsedSections.experience;
+
   const shouldReparseEducation = !resume.educationItems?.length;
   const shouldReparseBasicInfo = !resume.basicInfoFields;
 
-  if (!shouldReparseExperience && !shouldReparseEducation && !shouldReparseBasicInfo) {
-    return resume;
+  if (!shouldReparseEducation && !shouldReparseBasicInfo && resume.experienceItems?.length) {
+    return {
+      ...resume,
+      experienceItems,
+      experience: nextExperienceString,
+    };
   }
-
-  const parsedSections = parseResumeSections(resume.rawText);
 
   return {
     ...resume,
     basicInfoFields: resume.basicInfoFields ?? parsedSections.basicInfoFields,
-    experience: resume.experience || parsedSections.experience,
-    experienceItems: resume.experienceItems?.length
-      ? resume.experienceItems
-      : parsedSections.experienceItems,
+    experience: nextExperienceString,
+    experienceItems,
     education: resume.education || parsedSections.education,
     educationItems: resume.educationItems?.length
       ? resume.educationItems
       : parsedSections.educationItems,
   };
-}
-
-function TrashIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14ZM10 11v6M14 11v6" />
-    </svg>
-  );
 }
 
 function buildParsedResumeDebugJson(resume: Resume) {
@@ -238,6 +240,10 @@ export function TailorPage({
     activeResume?.educationItems?.length ? activeResume.educationItems : [emptyEducationItem];
   const matchScore = calculateMatchScore(activeResume, matchKeywords);
   const displayedScore = matchScore || (activeResume ? 72 : 0);
+
+  const visibleTailorSections = activeResume
+    ? getVisibleTailorSections(activeResume, selectedSkills)
+    : [];
 
   function saveResume(nextResume: Resume) {
     onResumeChange({
@@ -575,394 +581,26 @@ export function TailorPage({
         </div>
       </Card>
 
-      <Card tone="soft">
-        <div className="section-header">
-          <span className="eyebrow">Basic Info</span>
-          <div className="section-header-actions">
-            <span className="fit">Editable</span>
-            <button
-              type="button"
-              className="section-delete-button"
-              aria-label="Clear basic info section"
-              onClick={() => clearEntireSection("basicInfo")}
-            >
-              <TrashIcon />
-            </button>
-          </div>
-        </div>
-        <div className="basic-info-grid">
-          <label className="editor-field-label">
-            Name
-            <input
-              className="text-input"
-              value={basicInfoFields.name}
-              onChange={(event) =>
-                updateBasicInfoField("name", event.target.value)
-              }
-            />
-          </label>
-          <label className="editor-field-label">
-            Email
-            <input
-              className="text-input"
-              value={basicInfoFields.email}
-              onChange={(event) =>
-                updateBasicInfoField("email", event.target.value)
-              }
-            />
-          </label>
-          <label className="editor-field-label">
-            Phone
-            <input
-              className="text-input"
-              value={basicInfoFields.phone}
-              onChange={(event) =>
-                updateBasicInfoField("phone", event.target.value)
-              }
-            />
-          </label>
-          <label className="editor-field-label">
-            Location
-            <input
-              className="text-input"
-              value={basicInfoFields.location}
-              onChange={(event) =>
-                updateBasicInfoField("location", event.target.value)
-              }
-            />
-          </label>
-          <label className="editor-field-label basic-info-wide">
-            Links
-            <input
-              className="text-input"
-              value={basicInfoFields.links.join(", ")}
-              onChange={(event) => updateBasicInfoLinks(event.target.value)}
-            />
-          </label>
-        </div>
-      </Card>
-
-      <Card tone="soft">
-        <div className="section-header">
-          <span className="eyebrow">Skills</span>
-          <div className="section-header-actions">
-            <button className="ai-enhance-button" type="button">
-              AI Rewrite
-            </button>
-            <button
-              type="button"
-              className="section-delete-button"
-              aria-label="Clear all skills"
-              onClick={() => clearEntireSection("skills")}
-            >
-              <TrashIcon />
-            </button>
-          </div>
-        </div>
-        <div className="editable-chip-list skills-chip-list">
-          {selectedSkills.length ? (
-            selectedSkills.map((skill, index) => (
-              <div className="skill-chip-row" key={`${skill}-${index}`}>
-                <input
-                  className="editable-chip skill-chip-input"
-                  value={skill}
-                  size={Math.max(8, Math.min(skill.length + 2, 48))}
-                  onChange={(event) => updateSkill(index, event.target.value)}
-                />
-                <button
-                  type="button"
-                  className="chip-delete-button"
-                  aria-label={`Remove skill ${skill}`}
-                  onClick={() => removeSkillAt(index)}
-                >
-                  <TrashIcon />
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="helper-text">No skills parsed yet.</p>
-          )}
-          <button className="chip add-skill-chip" type="button" onClick={addSkill}>
-            + Skill
-          </button>
-        </div>
-      </Card>
-
-      <Card>
-        <div className="section-header">
-          <h2>Summary</h2>
-          <div className="section-header-actions">
-            <button className="ai-enhance-button" type="button">
-              AI Rewrite
-            </button>
-            <button
-              type="button"
-              className="section-delete-button"
-              aria-label="Clear summary section"
-              onClick={() => clearEntireSection("summary")}
-            >
-              <TrashIcon />
-            </button>
-          </div>
-        </div>
-        <textarea
-          className="textarea inline-edit-textarea"
-          rows={5}
-          placeholder="Professional summary..."
-          value={activeResume.summary ?? ""}
-          onChange={(event) => updateResumeSection("summary", event.target.value)}
-        />
-      </Card>
-
-      <Card>
-        <div className="section-header">
-          <h2>Experience</h2>
-          <div className="section-header-actions">
-            <button className="ai-enhance-button" type="button">
-              AI Rewrite
-            </button>
-            <button
-              type="button"
-              className="section-delete-button"
-              aria-label="Clear all experience"
-              onClick={() => clearEntireSection("experience")}
-            >
-              <TrashIcon />
-            </button>
-          </div>
-        </div>
-        {activeResume.experienceItems?.length ? (
-          <div className="resume-item-list">
-            {activeResume.experienceItems.map((item) => (
-              <div className="resume-edit-card" key={item.id}>
-                <div className="resume-edit-card-header">
-                  <button
-                    type="button"
-                    className="section-delete-button"
-                    aria-label="Remove this experience entry"
-                    onClick={() => removeExperienceItem(item.id)}
-                  >
-                    <TrashIcon />
-                  </button>
-                </div>
-                <div className="editor-field-grid">
-                  <label className="editor-field-label">
-                    Job Title
-                    <input
-                      className="text-input"
-                      value={item.title}
-                      onChange={(event) =>
-                        updateExperienceItem(item.id, "title", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label className="editor-field-label">
-                    Company
-                    <input
-                      className="text-input"
-                      value={item.company}
-                      onChange={(event) =>
-                        updateExperienceItem(item.id, "company", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label className="editor-field-label">
-                    Dates
-                    <input
-                      className="text-input"
-                      value={item.dates}
-                      onChange={(event) =>
-                        updateExperienceItem(item.id, "dates", event.target.value)
-                      }
-                    />
-                  </label>
-                  <label className="editor-field-label">
-                    Location
-                    <input
-                      className="text-input"
-                      value={item.location}
-                      onChange={(event) =>
-                        updateExperienceItem(
-                          item.id,
-                          "location",
-                          event.target.value,
-                        )
-                      }
-                    />
-                  </label>
-                </div>
-                <div className="achievement-list">
-                  <span className="editor-field-label">Achievements</span>
-                  {item.achievements.map((achievement, index) => (
-                    <div className="achievement-row" key={`${item.id}-${index}`}>
-                      <textarea
-                        className="textarea inline-edit-textarea compact-textarea"
-                        value={achievement}
-                        onChange={(event) =>
-                          updateExperienceAchievement(
-                            item.id,
-                            index,
-                            event.target.value,
-                          )
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="chip-delete-button"
-                        aria-label="Remove this achievement"
-                        onClick={() =>
-                          removeExperienceAchievement(item.id, index)
-                        }
-                      >
-                        <TrashIcon />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <textarea
-            className="textarea inline-edit-textarea"
-            rows={8}
-            value={activeResume.experience ?? ""}
-            onChange={(event) =>
-              updateResumeSection("experience", event.target.value)
-            }
-          />
-        )}
-      </Card>
-
-      <Card>
-        <div className="section-header">
-          <h2>Projects</h2>
-          <div className="section-header-actions">
-            <button className="ai-enhance-button" type="button">
-              AI Rewrite
-            </button>
-            <button
-              type="button"
-              className="section-delete-button"
-              aria-label="Clear projects section"
-              onClick={() => clearEntireSection("projects")}
-            >
-              <TrashIcon />
-            </button>
-          </div>
-        </div>
-        <textarea
-          className="textarea inline-edit-textarea"
-          rows={7}
-          placeholder="Project name, technologies, responsibilities, outcomes..."
-          value={activeResume.projects ?? ""}
-          onChange={(event) => updateResumeSection("projects", event.target.value)}
-        />
-      </Card>
-
-      <Card>
-        <div className="section-header">
-          <h2>Education</h2>
-          <div className="section-header-actions">
-            <button className="ai-enhance-button" type="button">
-              AI Rewrite
-            </button>
-            <button
-              type="button"
-              className="section-delete-button"
-              aria-label="Clear all education"
-              onClick={() => clearEntireSection("education")}
-            >
-              <TrashIcon />
-            </button>
-          </div>
-        </div>
-        <div className="resume-item-list">
-          {educationItems.map((item) => (
-            <div className="resume-edit-card" key={item.id}>
-              {activeResume.educationItems?.length ? (
-                <div className="resume-edit-card-header">
-                  <button
-                    type="button"
-                    className="section-delete-button"
-                    aria-label="Remove this education entry"
-                    onClick={() => removeEducationItem(item.id)}
-                  >
-                    <TrashIcon />
-                  </button>
-                </div>
-              ) : null}
-              <div className="editor-field-grid">
-                <label className="editor-field-label">
-                  Degree
-                  <input
-                    className="text-input"
-                    value={item.degree}
-                    onChange={(event) =>
-                      updateEducationItem(item.id, "degree", event.target.value)
-                    }
-                  />
-                </label>
-                <label className="editor-field-label">
-                  School
-                  <input
-                    className="text-input"
-                    value={item.school}
-                    onChange={(event) =>
-                      updateEducationItem(item.id, "school", event.target.value)
-                    }
-                  />
-                </label>
-                <label className="editor-field-label">
-                  Dates
-                  <input
-                    className="text-input"
-                    value={item.dates}
-                    onChange={(event) =>
-                      updateEducationItem(item.id, "dates", event.target.value)
-                    }
-                  />
-                </label>
-              </div>
-              <textarea
-                className="textarea inline-edit-textarea compact-textarea"
-                placeholder="Courses, awards, notes..."
-                value={item.details}
-                onChange={(event) =>
-                  updateEducationItem(item.id, "details", event.target.value)
-                }
-              />
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <Card>
-        <div className="section-header">
-          <h2>Certifications</h2>
-          <div className="section-header-actions">
-            <button className="ai-enhance-button" type="button">
-              AI Rewrite
-            </button>
-            <button
-              type="button"
-              className="section-delete-button"
-              aria-label="Clear certifications section"
-              onClick={() => clearEntireSection("certifications")}
-            >
-              <TrashIcon />
-            </button>
-          </div>
-        </div>
-        <textarea
-          className="textarea inline-edit-textarea compact-textarea"
-          placeholder="Certificates, licenses, awards..."
-          value={activeResume.certifications ?? ""}
-          onChange={(event) =>
-            updateResumeSection("certifications", event.target.value)
-          }
-        />
-      </Card>
+      <TailorSectionPanels
+        visibleSections={visibleTailorSections}
+        activeResume={activeResume}
+        basicInfoFields={basicInfoFields}
+        selectedSkills={selectedSkills}
+        educationItems={educationItems}
+        updateBasicInfoField={updateBasicInfoField}
+        updateBasicInfoLinks={updateBasicInfoLinks}
+        updateResumeSection={updateResumeSection}
+        updateSkill={updateSkill}
+        addSkill={addSkill}
+        updateExperienceItem={updateExperienceItem}
+        updateExperienceAchievement={updateExperienceAchievement}
+        updateEducationItem={updateEducationItem}
+        removeExperienceItem={removeExperienceItem}
+        removeEducationItem={removeEducationItem}
+        removeSkillAt={removeSkillAt}
+        removeExperienceAchievement={removeExperienceAchievement}
+        clearEntireSection={clearEntireSection}
+      />
 
       <Card>
         <details className="json-debug-panel" open>

@@ -5,6 +5,7 @@ import {
   type ResumeExperienceItem,
   type ResumeProjectItem,
 } from "../domain/resume";
+import { finalizeExperienceAchievements } from "../shared/experienceAchievements";
 
 export type ResumeSectionKey =
   | "basicInfo"
@@ -381,7 +382,16 @@ function parseExperienceItems(sectionText: string): ResumeExperienceItem[] {
     };
   });
 
-  return mergeAdjacentCompanyStubs(draftItems).map(refineExperienceAchievements);
+  return mergeAdjacentCompanyStubs(draftItems)
+    .map(refineExperienceAchievements)
+    .map((item) => ({
+      ...item,
+      achievements: finalizeExperienceAchievements(
+        item.achievements,
+        item.title,
+        item.location,
+      ),
+    }));
 }
 
 function parseProjectItems(sectionText: string): ResumeProjectItem[] {
