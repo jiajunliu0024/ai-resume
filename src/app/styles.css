@@ -687,15 +687,8 @@ textarea {
 }
 
 .step-labels span {
+  display: block;
   text-align: center;
-}
-
-.step-labels span:first-child {
-  text-align: left;
-}
-
-.step-labels span:last-child {
-  text-align: right;
 }
 
 .step-labels .active {
@@ -1726,4 +1719,131 @@ h2 {
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.cover-letter-card-head {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.cover-letter-job-inline {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.cover-letter-sources {
+  display: grid;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.cover-letter-source-block {
+  display: grid;
+  gap: 8px;
+}
+
+.cover-letter-source-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #172033;
+}
+
+.cover-letter-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cover-letter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #e3e7f0;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  color: #073391;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cover-letter-chip input {
+  margin: 0;
+  accent-color: #073391;
+}
+
+.cover-letter-req-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cover-letter-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #172033;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.cover-letter-checkbox-row input {
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: #073391;
+}
+
+.cover-letter-details {
+  border: 1px solid #e3e7f0;
+  border-radius: 14px;
+  padding: 10px 12px 12px;
+  background: #fbfcff;
+}
+
+.cover-letter-details summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: #073391;
+  font-size: 13px;
+}
+
+.cover-letter-details-hint {
+  margin: 8px 0 6px;
+}
+
+.cover-letter-generate-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.cover-letter-preview {
+  min-height: 200px;
+  max-height: 320px;
+  margin-top: 8px;
+  padding: 12px 14px;
+  overflow: auto;
+  border-radius: 12px;
+  background: #f3f6ff;
+  color: #172033;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cover-letter-preview-actions .link-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }

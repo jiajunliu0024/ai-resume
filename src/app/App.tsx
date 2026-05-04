@@ -311,7 +311,14 @@ export function App() {
       )}
 
       {currentStep === "results" && (
-        <ResultsPage onBack={() => setCurrentStep("tailor")} />
+        <ResultsPage
+          job={scannedJob}
+          resume={currentResume}
+          apiKey={apiKey}
+          aiProvider={aiProvider}
+          onBack={() => setCurrentStep("tailor")}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
       )}
     </div>
   );
