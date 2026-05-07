@@ -142,7 +142,7 @@ export function TailorTailoredPdfPreviewModal({
 
         <div className="tailor-pdf-preview-toolbar">
           <label className="field-label" htmlFor="tailor-tailored-preview-layout">
-            Data layout
+            Résumé template
           </label>
           <select
             id="tailor-tailored-preview-layout"

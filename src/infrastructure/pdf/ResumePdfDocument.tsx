@@ -6,6 +6,107 @@ type ResumePdfDocumentProps = {
   templateId: ResumePdfTemplateId;
 };
 
+/** Aligns with LaTeX `\\setstretch{1.12}` — same line gap within every body paragraph. */
+const PDF_BODY_LINE_HEIGHT = 1.12;
+
+const NAVY = "#073391";
+const BODY_COLOR = "#101828";
+const MUTED = "#667085";
+
+type PdfTheme = {
+  headerVariant: "classic" | "modern";
+  sectionVariant: "accent" | "minimal" | "plainRule" | "navy";
+  fontRegular: string;
+  fontBold: string;
+  baseFontSize: number;
+  pagePaddingTop: number;
+  pagePaddingH: number;
+  primary: string;
+};
+
+function resolvePdfTheme(templateId: ResumePdfTemplateId): PdfTheme {
+  switch (templateId) {
+    case "minimal-clean":
+      return {
+        headerVariant: "classic",
+        sectionVariant: "minimal",
+        fontRegular: "Helvetica",
+        fontBold: "Helvetica-Bold",
+        baseFontSize: 9.5,
+        pagePaddingTop: 36,
+        pagePaddingH: 40,
+        primary: "#475467",
+      };
+    case "plain-sections":
+      return {
+        headerVariant: "classic",
+        sectionVariant: "plainRule",
+        fontRegular: "Helvetica",
+        fontBold: "Helvetica-Bold",
+        baseFontSize: 9.5,
+        pagePaddingTop: 36,
+        pagePaddingH: 40,
+        primary: NAVY,
+      };
+    case "serif-formal":
+      return {
+        headerVariant: "classic",
+        sectionVariant: "accent",
+        fontRegular: "Times-Roman",
+        fontBold: "Times-Bold",
+        baseFontSize: 9.5,
+        pagePaddingTop: 36,
+        pagePaddingH: 40,
+        primary: NAVY,
+      };
+    case "sans-modern":
+      return {
+        headerVariant: "modern",
+        sectionVariant: "accent",
+        fontRegular: "Helvetica",
+        fontBold: "Helvetica-Bold",
+        baseFontSize: 9.5,
+        pagePaddingTop: 0,
+        pagePaddingH: 0,
+        primary: NAVY,
+      };
+    case "compact-10pt":
+      return {
+        headerVariant: "classic",
+        sectionVariant: "minimal",
+        fontRegular: "Helvetica",
+        fontBold: "Helvetica-Bold",
+        baseFontSize: 8.5,
+        pagePaddingTop: 28,
+        pagePaddingH: 32,
+        primary: "#475467",
+      };
+    case "ruled-navy":
+      return {
+        headerVariant: "classic",
+        sectionVariant: "navy",
+        fontRegular: "Helvetica",
+        fontBold: "Helvetica-Bold",
+        baseFontSize: 9.5,
+        pagePaddingTop: 36,
+        pagePaddingH: 40,
+        primary: NAVY,
+      };
+    case "classic-sample":
+    default:
+      return {
+        headerVariant: "classic",
+        sectionVariant: "accent",
+        fontRegular: "Helvetica",
+        fontBold: "Helvetica-Bold",
+        baseFontSize: 9.5,
+        pagePaddingTop: 36,
+        pagePaddingH: 40,
+        primary: NAVY,
+      };
+  }
+}
+
 function buildContactParts(basic: GenerateResumePdfInput["basicInfo"]): string[] {
   const parts: string[] = [];
   if (basic.phone.trim()) {
@@ -30,22 +131,70 @@ function buildLinkLine(basic: GenerateResumePdfInput["basicInfo"]): string {
     .join(" · ");
 }
 
-function createStyles(templateId: ResumePdfTemplateId) {
-  const isModern = templateId === "modern";
-  const isMinimal = templateId === "minimal";
+function splitSummaryParagraphs(summary: string): string[] {
+  return summary
+    .trim()
+    .split(/\n{2,}/)
+    .map((chunk) => chunk.replace(/\n+/g, " ").trim())
+    .filter(Boolean);
+}
 
-  const primary = isMinimal ? "#475467" : "#073391";
-  const bodyText = "#101828";
-  const muted = "#667085";
+function createStyles(templateId: ResumePdfTemplateId) {
+  const theme = resolvePdfTheme(templateId);
+  const fs = theme.baseFontSize;
+  const fsSmall = fs - 0.5;
+  const fsTiny = fs - 1;
+  const bodyLine = { lineHeight: PDF_BODY_LINE_HEIGHT };
+
+  const sectionTitleBase = {
+    fontSize: fs + 1,
+    fontFamily: theme.fontBold,
+    marginTop: theme.sectionVariant === "minimal" ? 8 : 10,
+    marginBottom: 5,
+    paddingBottom: 2,
+    ...bodyLine,
+  };
+
+  let sectionTitleAccent: Record<string, unknown> = {
+    ...sectionTitleBase,
+    color: theme.primary,
+    borderBottomWidth: 0.8,
+    borderBottomColor: "#e4e7ec",
+  };
+
+  if (theme.sectionVariant === "minimal") {
+    sectionTitleAccent = {
+      ...sectionTitleBase,
+      fontSize: fs + 0.5,
+      color: "#344054",
+      borderBottomWidth: 0,
+      paddingBottom: 0,
+    };
+  } else if (theme.sectionVariant === "plainRule") {
+    sectionTitleAccent = {
+      ...sectionTitleBase,
+      color: BODY_COLOR,
+      borderBottomWidth: 1.2,
+      borderBottomColor: theme.primary,
+    };
+  } else if (theme.sectionVariant === "navy") {
+    sectionTitleAccent = {
+      ...sectionTitleBase,
+      color: theme.primary,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.primary,
+    };
+  }
 
   return StyleSheet.create({
     page: {
-      fontFamily: "Helvetica",
-      fontSize: 9.5,
-      color: bodyText,
-      paddingTop: isModern ? 0 : 36,
+      fontFamily: theme.fontRegular,
+      fontSize: fs,
+      color: BODY_COLOR,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
+      paddingTop: theme.pagePaddingTop,
       paddingBottom: 40,
-      paddingHorizontal: isModern ? 0 : 40,
+      paddingHorizontal: theme.pagePaddingH,
     },
     hero: {
       backgroundColor: "#0f172a",
@@ -59,63 +208,67 @@ function createStyles(templateId: ResumePdfTemplateId) {
       fontSize: 22,
       fontFamily: "Helvetica-Bold",
       marginBottom: 6,
+      lineHeight: 1.15,
     },
     heroSub: {
       color: "#cbd5e1",
-      fontSize: 9,
+      fontSize: fsTiny,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
     },
     heroLinks: {
       color: "#94a3b8",
-      fontSize: 8.5,
+      fontSize: fsTiny,
       marginTop: 4,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
     },
     name: {
-      fontSize: isMinimal ? 20 : 22,
-      fontFamily: "Helvetica-Bold",
-      color: bodyText,
+      fontSize: theme.sectionVariant === "minimal" ? fs + 10.5 : fs + 12.5,
+      fontFamily: theme.fontBold,
+      color: BODY_COLOR,
       marginBottom: 6,
+      lineHeight: 1.12,
     },
     contact: {
-      fontSize: 9,
-      color: muted,
+      fontSize: fsSmall,
+      color: MUTED,
       marginBottom: 4,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
     },
     links: {
-      fontSize: 8.5,
-      color: primary,
+      fontSize: fsTiny,
+      color: theme.primary,
       marginBottom: 12,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
     },
-    sectionTitle: {
-      fontSize: 10.5,
-      fontFamily: "Helvetica-Bold",
-      color: primary,
-      marginTop: isMinimal ? 8 : 10,
-      marginBottom: 5,
-      borderBottomWidth: isMinimal ? 0 : 0.8,
-      borderBottomColor: "#e4e7ec",
-      paddingBottom: isMinimal ? 0 : 2,
-    },
-    sectionTitleMinimal: {
-      fontSize: 10,
-      fontFamily: "Helvetica-Bold",
-      color: "#344054",
-      marginTop: 10,
-      marginBottom: 4,
+    sectionTitle: sectionTitleAccent as {
+      fontSize: number;
+      fontFamily: string;
+      color?: string;
+      marginTop: number;
+      marginBottom: number;
+      borderBottomWidth?: number;
+      borderBottomColor?: string;
+      paddingBottom: number;
+      lineHeight: number;
     },
     paragraph: {
       marginBottom: 6,
       textAlign: "left",
-      lineHeight: 1.35,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
+      fontSize: fs,
+      fontFamily: theme.fontRegular,
     },
     roleTitle: {
-      fontFamily: "Helvetica-Bold",
-      fontSize: 10,
+      fontFamily: theme.fontBold,
+      fontSize: fs + 0.5,
       marginTop: 6,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
     },
     roleMeta: {
-      fontSize: 8.5,
-      color: muted,
+      fontSize: fsSmall,
+      color: MUTED,
       marginBottom: 3,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
     },
     bulletRow: {
       flexDirection: "row",
@@ -125,35 +278,46 @@ function createStyles(templateId: ResumePdfTemplateId) {
     },
     bullet: {
       width: 10,
-      fontSize: 9,
-      color: muted,
+      fontSize: fs,
+      color: MUTED,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
     },
     bulletText: {
       flex: 1,
-      fontSize: 9,
+      fontSize: fs,
+      fontFamily: theme.fontRegular,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
     },
     eduLine: {
-      fontSize: 9.5,
+      fontSize: fs,
       marginBottom: 4,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
+      fontFamily: theme.fontRegular,
     },
     skillsLine: {
-      fontSize: 9,
-      color: bodyText,
+      fontSize: fs,
+      color: BODY_COLOR,
       marginTop: 2,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
+      fontFamily: theme.fontRegular,
     },
     projectHead: {
-      fontFamily: "Helvetica-Bold",
-      fontSize: 9.5,
+      fontFamily: theme.fontBold,
+      fontSize: fs,
       marginTop: 5,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
     },
     projectSub: {
-      fontSize: 8.5,
-      color: muted,
+      fontSize: fsSmall,
+      color: MUTED,
       marginBottom: 2,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
     },
     certLine: {
-      fontSize: 9,
+      fontSize: fs,
       marginBottom: 2,
+      lineHeight: PDF_BODY_LINE_HEIGHT,
+      fontFamily: theme.fontRegular,
     },
     bodyPad: {
       paddingHorizontal: 40,
@@ -164,38 +328,38 @@ function createStyles(templateId: ResumePdfTemplateId) {
 export function ResumePdfDocument({ input, templateId }: ResumePdfDocumentProps) {
   const { resume, basicInfo, educationItems, selectedSkills } = input;
   const styles = createStyles(templateId);
+  const theme = resolvePdfTheme(templateId);
   const name = basicInfo.name.trim() || resume.title || "Résumé";
   const contactLine = buildContactParts(basicInfo).join("  ·  ");
   const linkLine = buildLinkLine(basicInfo);
-  const isModern = templateId === "modern";
-  const isMinimal = templateId === "minimal";
-
-  const sectionTitleStyle = isMinimal ? styles.sectionTitleMinimal : styles.sectionTitle;
+  const isModern = theme.headerVariant === "modern";
 
   const experienceItems = resume.experienceItems ?? [];
   const eduUsable = educationItems.filter((e) => e.school.trim() || e.degree.trim());
   const projects = resume.projectItems ?? [];
 
+  const summaryChunks = resume.summary?.trim() ? splitSummaryParagraphs(resume.summary) : [];
+
   const summaryBlock =
-    resume.summary?.trim() ?
+    summaryChunks.length > 0 ?
       <View>
-        <Text style={sectionTitleStyle}>Summary</Text>
-        <Text style={styles.paragraph}>{resume.summary.trim()}</Text>
+        <Text style={styles.sectionTitle}>Summary</Text>
+        {summaryChunks.map((chunk, index) => (
+          <Text key={`sum-${index}`} style={styles.paragraph}>
+            {chunk}
+          </Text>
+        ))}
       </View>
     : null;
 
   const experienceBlock =
     experienceItems.length > 0 ?
       <View>
-        <Text style={sectionTitleStyle}>Experience</Text>
+        <Text style={styles.sectionTitle}>Experience</Text>
         {experienceItems.map((item) => (
           <View key={item.id}>
-            <Text style={styles.roleTitle}>
-              {[item.title, item.company].filter(Boolean).join(" · ")}
-            </Text>
-            <Text style={styles.roleMeta}>
-              {[item.dates, item.location].filter(Boolean).join(" · ")}
-            </Text>
+            <Text style={styles.roleTitle}>{[item.title, item.company].filter(Boolean).join(" · ")}</Text>
+            <Text style={styles.roleMeta}>{[item.dates, item.location].filter(Boolean).join(" · ")}</Text>
             {item.achievements
               .map((a) => a.trim())
               .filter(Boolean)
@@ -213,12 +377,16 @@ export function ResumePdfDocument({ input, templateId }: ResumePdfDocumentProps)
   const educationBlock =
     eduUsable.length > 0 ?
       <View>
-        <Text style={sectionTitleStyle}>Education</Text>
+        <Text style={styles.sectionTitle}>Education</Text>
         {eduUsable.map((e) => (
-          <Text key={e.id} style={styles.eduLine}>
-            {[e.degree, e.school, e.dates].filter(Boolean).join(" · ")}
-            {e.details.trim() ? `\n${e.details.trim()}` : ""}
-          </Text>
+          <View key={e.id}>
+            <Text style={styles.eduLine}>
+              {[e.degree, e.school, e.dates].filter(Boolean).join(" · ")}
+            </Text>
+            {e.details.trim() ?
+              <Text style={styles.paragraph}>{e.details.trim()}</Text>
+            : null}
+          </View>
         ))}
       </View>
     : null;
@@ -226,7 +394,7 @@ export function ResumePdfDocument({ input, templateId }: ResumePdfDocumentProps)
   const skillsBlock =
     selectedSkills.length > 0 ?
       <View>
-        <Text style={sectionTitleStyle}>Skills</Text>
+        <Text style={styles.sectionTitle}>Skills</Text>
         <Text style={styles.skillsLine}>{selectedSkills.join(", ")}</Text>
       </View>
     : null;
@@ -234,16 +402,12 @@ export function ResumePdfDocument({ input, templateId }: ResumePdfDocumentProps)
   const projectsBlock =
     projects.length > 0 ?
       <View>
-        <Text style={sectionTitleStyle}>Projects</Text>
+        <Text style={styles.sectionTitle}>Projects</Text>
         {projects.map((p) => (
           <View key={p.id}>
             <Text style={styles.projectHead}>{p.name || "Project"}</Text>
-            {p.technologies.trim() ?
-              <Text style={styles.projectSub}>{p.technologies.trim()}</Text>
-            : null}
-            {p.description.trim() ?
-              <Text style={styles.paragraph}>{p.description.trim()}</Text>
-            : null}
+            {p.technologies.trim() ? <Text style={styles.projectSub}>{p.technologies.trim()}</Text> : null}
+            {p.description.trim() ? <Text style={styles.paragraph}>{p.description.trim()}</Text> : null}
             {p.highlights
               .map((h) => h.trim())
               .filter(Boolean)
@@ -266,7 +430,7 @@ export function ResumePdfDocument({ input, templateId }: ResumePdfDocumentProps)
   const certificationsBlock =
     certLines.length > 0 ?
       <View>
-        <Text style={sectionTitleStyle}>Certifications</Text>
+        <Text style={styles.sectionTitle}>Certifications</Text>
         {certLines.map((line, index) => (
           <Text key={`cert-${index}`} style={styles.certLine}>
             • {line}

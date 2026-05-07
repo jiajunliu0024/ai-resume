@@ -6,4 +6,6 @@ export const RESUME_TAILOR_MINIMIZE_PANEL = "RESUME_TAILOR_MINIMIZE_PANEL" as co
 
 export type ResumeTailorMinimizeMessage = {
   type: typeof RESUME_TAILOR_MINIMIZE_PANEL;
+  /** Host job tab when the UI runs inside the injected floating iframe. */
+  tabId?: number;
 };

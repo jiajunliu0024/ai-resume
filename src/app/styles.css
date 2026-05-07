@@ -29,7 +29,38 @@ textarea {
   background: #f7f9fe;
 }
 
+/* Injected floating iframe (`?embed=floating-widget`): fill panel — no 360px letterboxing. */
+html.embed-floating-widget,
+html.embed-floating-widget body {
+  height: 100%;
+  margin: 0;
+}
+
+html.embed-floating-widget #root {
+  min-height: 100%;
+}
+
+.app-shell.app-shell--embed-floating {
+  max-width: none;
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+}
+
+/* Title row + step tabs stay visible while page content scrolls (popup / iframe). */
+.app-chrome-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #ffffff;
+  border-bottom: 1px solid #e3e7f0;
+  box-shadow: 0 6px 16px rgb(25 48 90 / 6%);
+}
+
 .app-chrome-header {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -65,10 +96,16 @@ textarea {
   text-overflow: ellipsis;
 }
 
-.app-chrome-close {
+.app-chrome-trailing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
-  font-size: 20px;
-  line-height: 1;
+}
+
+.app-chrome-back {
+  font-size: 18px;
+  font-weight: 800;
 }
 
 .brand {

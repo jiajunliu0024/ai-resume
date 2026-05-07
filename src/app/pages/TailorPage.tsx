@@ -252,7 +252,7 @@ export function TailorPage({
   const [rewriterPayload, setRewriterPayload] = useState<TailorAiRewriteOpenPayload | null>(null);
   const [bundledTemplatePreviewOpen, setBundledTemplatePreviewOpen] = useState(false);
   const [tailoredPdfPreviewOpen, setTailoredPdfPreviewOpen] = useState(false);
-  const [tailoredPdfLayout, setTailoredPdfLayout] = useState<ResumePdfTemplateId>("professional");
+  const [tailoredPdfLayout, setTailoredPdfLayout] = useState<ResumePdfTemplateId>("classic-sample");
   const [tailoredPdfBusy, setTailoredPdfBusy] = useState(false);
   const matchKeywords = getKeywordTexts(job).slice(0, 8);
   const basicInfoFields =
@@ -735,14 +735,12 @@ export function TailorPage({
       <Card>
         <h2 className="tailor-pdf-trigger-title">Résumé PDF</h2>
         <p className="helper-text">
-          <strong>Preview resume</strong> opens your tailored PDF (same @react-pdf output as
-          download). <strong>Download tailored PDF</strong> saves that file. Optional: preview a
-          static bundled template file for layout reference.
+          Pick a <strong>résumé template</strong> for preview and download — each option maps to a different PDF layout (fonts, header, section styling). Body text uses one line-height ratio so wrapped lines stay even with bullets.
         </p>
         <div className="tailor-pdf-card-actions">
           <div className="tailor-pdf-tailored-row">
             <label className="field-label" htmlFor="tailor-tailored-pdf-layout">
-              Data layout
+              Résumé template
             </label>
             <select
               id="tailor-tailored-pdf-layout"

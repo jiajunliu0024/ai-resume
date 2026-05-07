@@ -23,10 +23,11 @@ type AppStep = "scan" | "resume" | "tailor" | "results";
 
 const steps: AppStep[] = ["scan", "resume", "tailor", "results"];
 
-const embeddedInFloatingWidget =
-  new URLSearchParams(window.location.search).get("embed") === "floating-widget";
-
 export function App() {
+  const embeddedInFloatingWidget =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("embed") === "floating-widget";
+
   // currentStep controls which page is visible in the three-step flow.
   const [currentStep, setCurrentStep] = useState<AppStep>("scan");
   // apiKey is kept in React state for the input field, and mirrored to
@@ -51,6 +52,31 @@ export function App() {
     : currentResume
       ? [currentResume]
       : [];
+
+  function handleHeaderBack() {
+    if (currentStep === "resume") {
+      setCurrentStep("scan");
+    } else if (currentStep === "tailor") {
+      setCurrentStep("resume");
+    } else if (currentStep === "results") {
+      setCurrentStep("tailor");
+    }
+  }
+
+  useEffect(() => {
+    if (!embeddedInFloatingWidget) {
+      return;
+    }
+
+    const html = document.documentElement;
+    const { body } = document;
+    html.classList.add("embed-floating-widget");
+    body.classList.add("embed-floating-widget");
+    return () => {
+      html.classList.remove("embed-floating-widget");
+      body.classList.remove("embed-floating-widget");
+    };
+  }, [embeddedInFloatingWidget]);
 
   // Load stored AI settings once when the extension UI opens.
   useEffect(() => {
@@ -203,14 +229,16 @@ export function App() {
   // 4. Merge AI insights back into the scan result.
   // 5. Save the final object in React state and chrome.storage.local.
   async function handleScanCurrentPage() {
+    if (!apiKey.trim()) {
+      setSettingsOpen(true);
+      setScanError(null);
+      return;
+    }
+
     setIsScanning(true);
     setScanError(null);
 
     try {
-      if (!apiKey.trim()) {
-        throw new Error("Enter your AI provider API key before scanning.");
-      }
-
       // result contains raw page text plus a local fallback extraction.
       const result = await scanCurrentTab(readActiveTabText);
       // aiInsights replaces the local fallback with higher-quality extraction.
@@ -247,12 +275,18 @@ export function App() {
   }
 
   return (
-    <div className="app-shell">
-      <AppHeader
-        onOpenSettings={() => setSettingsOpen(true)}
-        embeddedInFloatingWidget={embeddedInFloatingWidget}
-      />
-      <StepProgress currentStepIndex={currentStepIndex} />
+    <div
+      className={
+        embeddedInFloatingWidget ? "app-shell app-shell--embed-floating" : "app-shell"
+      }
+    >
+      <div className="app-chrome-sticky">
+        <AppHeader
+          onOpenSettings={() => setSettingsOpen(true)}
+          onNavigateBack={currentStep === "scan" ? undefined : handleHeaderBack}
+        />
+        <StepProgress currentStepIndex={currentStepIndex} />
+      </div>
 
       {settingsOpen && (
         <SettingsPanel

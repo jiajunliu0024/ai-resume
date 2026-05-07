@@ -6,6 +6,8 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    /** Popup + PDF pipeline exceed 500 kB minified; raising avoids noisy warnings on every build. */
+    chunkSizeWarningLimit: 2200,
     rollupOptions: {
       input: {
         popup: "index.html",
