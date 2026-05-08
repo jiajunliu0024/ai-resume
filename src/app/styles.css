@@ -22,6 +22,8 @@ textarea {
 }
 
 .app-shell {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 360px;
   min-height: 720px;
@@ -48,6 +50,49 @@ html.embed-floating-widget #root {
   min-height: 100dvh;
 }
 
+/* Step content: flex grow below chrome; enter/exit transitions in App. */
+.app-step-stage {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-step-panel {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Opacity-only: avoids transform stacking/paint glitches inside floating iframe + Chrome. */
+.app-step-enter {
+  opacity: 0;
+}
+
+.app-step-enter-active {
+  opacity: 1;
+  transition: opacity 280ms ease-out;
+}
+
+.app-step-exit {
+  opacity: 1;
+}
+
+.app-step-exit-active {
+  opacity: 0;
+  transition: opacity 220ms ease-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-step-enter-active,
+  .app-step-exit-active {
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Title row + step tabs stay visible while page content scrolls (popup / iframe). */
 .app-chrome-sticky {
   position: sticky;
@@ -56,6 +101,7 @@ html.embed-floating-widget #root {
   background: #ffffff;
   border-bottom: 1px solid #e3e7f0;
   box-shadow: 0 6px 16px rgb(25 48 90 / 6%);
+  flex-shrink: 0;
 }
 
 .app-chrome-header {
@@ -161,13 +207,64 @@ html.embed-floating-widget #root {
   background: rgb(15 23 42 / 24%);
 }
 
+/* Open / close from hamburger: dim fades; drawer slides from the left. */
+.settings-shell-enter {
+  opacity: 0;
+}
+
+.settings-shell-enter .settings-panel {
+  transform: translateX(-100%);
+}
+
+.settings-shell-enter-active {
+  opacity: 1;
+  transition: opacity 260ms ease-out;
+}
+
+.settings-shell-enter-active .settings-panel {
+  transform: translateX(0);
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.settings-shell-exit {
+  opacity: 1;
+}
+
+.settings-shell-exit-active {
+  opacity: 0;
+  transition: opacity 220ms ease-in;
+}
+
+.settings-shell-exit-active .settings-panel {
+  transform: translateX(-100%);
+  transition: transform 220ms ease-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-shell-enter .settings-panel {
+    transform: none;
+  }
+
+  .settings-shell-enter-active .settings-panel,
+  .settings-shell-exit-active .settings-panel {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .settings-shell-enter-active,
+  .settings-shell-exit-active {
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .settings-panel {
   width: min(340px, 86vw);
   max-width: 100%;
   min-width: 0;
   min-height: 100%;
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   gap: 14px;
   border-right: 1px solid #e3e7f0;
   padding: 16px;
@@ -179,6 +276,52 @@ html.embed-floating-widget #root {
 .settings-panel > * {
   min-width: 0;
   max-width: 100%;
+}
+
+.settings-panel-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.settings-view-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.settings-view-enter,
+.step-menu-enter {
+  opacity: 0;
+}
+
+.settings-view-enter-active,
+.step-menu-enter-active {
+  opacity: 1;
+  transition: opacity 220ms ease-out;
+}
+
+.settings-view-exit,
+.step-menu-exit {
+  opacity: 1;
+}
+
+.settings-view-exit-active,
+.step-menu-exit-active {
+  opacity: 0;
+  transition: opacity 180ms ease-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-view-enter-active,
+  .settings-view-exit-active,
+  .step-menu-enter-active,
+  .step-menu-exit-active {
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .settings-header {
@@ -229,7 +372,7 @@ html.embed-floating-widget #root {
 }
 
 .settings-back-button {
-  justify-self: start;
+  align-self: flex-start;
 }
 
 .modal-backdrop {
@@ -697,6 +840,14 @@ html.embed-floating-widget #root {
   background: #ffffff;
 }
 
+.steps-transition-shell {
+  min-height: 52px;
+}
+
+.steps-strip {
+  width: 100%;
+}
+
 .step-dots {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -707,6 +858,7 @@ html.embed-floating-widget #root {
   height: 6px;
   border-radius: 999px;
   background: #d8e3f8;
+  transition: background-color 220ms ease;
 }
 
 .step-dot.active,
@@ -726,6 +878,7 @@ html.embed-floating-widget #root {
 .step-labels span {
   display: block;
   text-align: center;
+  transition: color 220ms ease;
 }
 
 .step-labels .active {

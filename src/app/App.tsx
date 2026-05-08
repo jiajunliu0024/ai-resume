@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CSSTransition, SwitchTransition } from "react-transition-group";
 import { scanCurrentTab } from "../application/scanCurrentTab";
 import { type ScanJobPageResult } from "../application/scanJobPage";
 import { type Resume } from "../domain/resume";
@@ -24,6 +25,7 @@ type AppStep = "scan" | "resume" | "tailor" | "results";
 const steps: AppStep[] = ["scan", "resume", "tailor", "results"];
 
 export function App() {
+  const stepPanelRef = useRef<HTMLDivElement>(null);
   const embeddedInFloatingWidget =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("embed") === "floating-widget";
@@ -288,72 +290,81 @@ export function App() {
         <StepProgress currentStepIndex={currentStepIndex} />
       </div>
 
-      {settingsOpen && (
-        <SettingsPanel
-          apiKey={apiKey}
-          aiProvider={aiProvider}
-          onApiKeyChange={handleApiKeyChange}
-          onAiProviderChange={handleAiProviderChange}
-          onResumePageOpen={() => {
-            setCurrentStep("resume");
-            setSettingsOpen(false);
-          }}
-          onClearLocalData={() => {
-            void handleClearLocalData();
-          }}
-          onClose={() => setSettingsOpen(false)}
-        />
-      )}
+      <SettingsPanel
+        open={settingsOpen}
+        apiKey={apiKey}
+        aiProvider={aiProvider}
+        onApiKeyChange={handleApiKeyChange}
+        onAiProviderChange={handleAiProviderChange}
+        onResumePageOpen={() => {
+          setCurrentStep("resume");
+          setSettingsOpen(false);
+        }}
+        onClearLocalData={() => {
+          void handleClearLocalData();
+        }}
+        onClose={() => setSettingsOpen(false)}
+      />
 
-      {currentStep === "scan" && (
-        <ScanPage
-          error={scanError}
-          isScanning={isScanning}
-          scannedJob={scannedJob}
-          onNext={() => setCurrentStep("resume")}
-          onScan={handleScanCurrentPage}
-        />
-      )}
-
-      {currentStep === "resume" && (
-        <ResumePage
-          apiKey={apiKey}
-          aiProvider={aiProvider}
-          jobTitle={scannedJob?.title}
-          resumes={visibleResumes}
-          resume={currentResume}
-          onBack={() => setCurrentStep("scan")}
-          onResumesAdd={handleResumesAdd}
-          onResumeDelete={handleResumeDelete}
-          onResumeSelect={handleResumeSelect}
-          onOpenSettings={() => setSettingsOpen(true)}
-          onNext={() => setCurrentStep("tailor")}
-        />
-      )}
-
-      {currentStep === "tailor" && (
-        <TailorPage
-          apiKey={apiKey}
-          aiProvider={aiProvider}
-          job={scannedJob}
-          resume={currentResume}
-          onBack={() => setCurrentStep("resume")}
-          onOpenSettings={() => setSettingsOpen(true)}
-          onResumeChange={handleResumeChange}
-          onNext={() => setCurrentStep("results")}
-        />
-      )}
-
-      {currentStep === "results" && (
-        <ResultsPage
-          job={scannedJob}
-          resume={currentResume}
-          apiKey={apiKey}
-          aiProvider={aiProvider}
-          onBack={() => setCurrentStep("tailor")}
-          onOpenSettings={() => setSettingsOpen(true)}
-        />
-      )}
+      <div className="app-step-stage">
+        <SwitchTransition mode="out-in">
+          <CSSTransition
+            nodeRef={stepPanelRef}
+            key={currentStep}
+            timeout={{ enter: 280, exit: 220 }}
+            classNames="app-step"
+            unmountOnExit
+            appear={false}
+          >
+            <div ref={stepPanelRef} className="app-step-panel">
+              {currentStep === "scan" ? (
+                <ScanPage
+                  error={scanError}
+                  isScanning={isScanning}
+                  scannedJob={scannedJob}
+                  onNext={() => setCurrentStep("resume")}
+                  onScan={handleScanCurrentPage}
+                />
+              ) : currentStep === "resume" ? (
+                <ResumePage
+                  apiKey={apiKey}
+                  aiProvider={aiProvider}
+                  jobTitle={scannedJob?.title}
+                  resumes={visibleResumes}
+                  resume={currentResume}
+                  onBack={() => setCurrentStep("scan")}
+                  onResumesAdd={handleResumesAdd}
+                  onResumeDelete={handleResumeDelete}
+                  onResumeSelect={handleResumeSelect}
+                  onOpenSettings={() => setSettingsOpen(true)}
+                  onNext={() => setCurrentStep("tailor")}
+                />
+              ) : currentStep === "tailor" ? (
+                <TailorPage
+                  apiKey={apiKey}
+                  aiProvider={aiProvider}
+                  job={scannedJob}
+                  resume={currentResume}
+                  onBack={() => setCurrentStep("resume")}
+                  onOpenSettings={() => setSettingsOpen(true)}
+                  onResumeChange={handleResumeChange}
+                  onNext={() => setCurrentStep("results")}
+                />
+              ) : (
+                <ResultsPage
+                  job={scannedJob}
+                  resume={currentResume}
+                  apiKey={apiKey}
+                  aiProvider={aiProvider}
+                  onBack={() => setCurrentStep("tailor")}
+                  onGoToScan={() => setCurrentStep("scan")}
+                  onOpenSettings={() => setSettingsOpen(true)}
+                />
+              )}
+            </div>
+          </CSSTransition>
+        </SwitchTransition>
+      </div>
     </div>
   );
 }

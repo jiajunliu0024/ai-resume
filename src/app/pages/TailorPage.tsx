@@ -218,25 +218,6 @@ function enrichResumeSections(resume: Resume | null) {
   };
 }
 
-function buildParsedResumeDebugJson(resume: Resume) {
-  return {
-    title: resume.title,
-    parseStatus: resume.parseStatus,
-    parseSource: resume.parseSource,
-    parsedAt: resume.parsedAt,
-    parserVersion: resume.parserVersion,
-    basicInfo: resume.basicInfoFields,
-    summary: resume.summary,
-    skills: splitSkillChips(resume.skills),
-    experienceItems: resume.experienceItems ?? [],
-    projectItems: resume.projectItems ?? [],
-    educationItems: resume.educationItems ?? [],
-    certifications: resume.certifications
-      ? resume.certifications.split(/\n+/).filter(Boolean)
-      : [],
-  };
-}
-
 export function TailorPage({
   apiKey,
   aiProvider,
@@ -721,16 +702,6 @@ export function TailorPage({
         removeExperienceAchievement={removeExperienceAchievement}
         clearEntireSection={clearEntireSection}
       />
-
-      <Card>
-        <details className="json-debug-panel" open>
-          <summary>Parsed Resume JSON</summary>
-          <p className="helper-text">
-            Debug view of the structured resume data used by Tailor.
-          </p>
-          <pre>{JSON.stringify(buildParsedResumeDebugJson(activeResume), null, 2)}</pre>
-        </details>
-      </Card>
 
       <Card>
         <h2 className="tailor-pdf-trigger-title">Résumé PDF</h2>

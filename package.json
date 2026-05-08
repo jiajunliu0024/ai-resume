@@ -17,6 +17,7 @@
     "pdfjs-dist": "^5.7.284",
     "react": "latest",
     "react-dom": "latest",
+    "react-transition-group": "^4.4.5",
     "typescript": "latest",
     "vite": "latest"
   },
@@ -25,6 +26,7 @@
     "@types/chrome": "^0.1.40",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/react-transition-group": "^4.4.12",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",

@@ -16,6 +16,7 @@ type ResultsPageProps = {
   apiKey: string;
   aiProvider: AiProviderId;
   onBack: () => void;
+  onGoToScan: () => void;
   onOpenSettings: () => void;
 };
 
@@ -32,6 +33,7 @@ export function ResultsPage({
   apiKey,
   aiProvider,
   onBack,
+  onGoToScan,
   onOpenSettings,
 }: ResultsPageProps) {
   const hasApiKey = Boolean(apiKey.trim());
@@ -133,9 +135,12 @@ export function ResultsPage({
             Scan a job and select a resume first, then return here from the Tailor step.
           </p>
         </Card>
-        <div className="footer-actions">
+        <div className="footer-actions two-columns">
           <PrimaryButton type="button" variant="secondary" onClick={onBack}>
             Back
+          </PrimaryButton>
+          <PrimaryButton type="button" onClick={onGoToScan}>
+            Go to Scan
           </PrimaryButton>
         </div>
       </main>
@@ -284,9 +289,12 @@ export function ResultsPage({
         </div>
       </Card>
 
-      <div className="footer-actions">
+      <div className="footer-actions two-columns">
         <PrimaryButton type="button" variant="secondary" onClick={onBack}>
           Back
+        </PrimaryButton>
+        <PrimaryButton type="button" onClick={onGoToScan}>
+          New job scan
         </PrimaryButton>
       </div>
     </main>
