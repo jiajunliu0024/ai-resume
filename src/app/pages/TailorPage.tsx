@@ -7,6 +7,7 @@ import {
 } from "../../domain/resume";
 import { parseResumeSections } from "../../application/parseResumeSections";
 import { finalizeExperienceAchievements } from "../../shared/experienceAchievements";
+import { APP_FLOW_STEPS } from "../../shared/appFlowSteps";
 import { type ScanJobPageResult } from "../../application/scanJobPage";
 import { type AiProviderId } from "../../infrastructure/ai/openAiJobInsightsExtractor";
 import { Card } from "../components/Card";
@@ -618,8 +619,11 @@ export function TailorPage({
   if (!activeResume) {
     return (
       <main className="page stack">
+        <header className="page-step-header">
+          <h1>{APP_FLOW_STEPS.tailor.label}</h1>
+          <p className="page-step-subtitle">{APP_FLOW_STEPS.tailor.pageSubtitle}</p>
+        </header>
         <section className="center stack">
-          <h1>Tailored Resume</h1>
           <p className="muted">Select a resume before tailoring.</p>
         </section>
         <PrimaryButton type="button" variant="secondary" onClick={onBack}>
@@ -634,8 +638,11 @@ export function TailorPage({
     <main className="page stack">
       <header className="tailor-hero">
         <div>
-          <h1>Tailored Resume</h1>
-          <p className="muted truncate-text">
+          <h1>{APP_FLOW_STEPS.tailor.label}</h1>
+          <p className="page-step-subtitle tailor-hero-step-subtitle">
+            {APP_FLOW_STEPS.tailor.pageSubtitle}
+          </p>
+          <p className="muted truncate-text tailor-hero-resume-line">
             {basicInfoFields.name || activeResume.basicInfo?.split("\n")[0] || activeResume.title}
             {job?.title ? ` · ${job.title}` : ""}
           </p>

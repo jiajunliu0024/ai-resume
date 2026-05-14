@@ -841,7 +841,7 @@ html.embed-floating-widget #root {
 }
 
 .steps-transition-shell {
-  min-height: 52px;
+  min-height: 58px;
 }
 
 .steps-strip {
@@ -871,8 +871,9 @@ html.embed-floating-widget #root {
   grid-template-columns: repeat(4, 1fr);
   margin-top: 8px;
   color: #7b8497;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
+  line-height: 1.25;
 }
 
 .step-labels span {
@@ -887,6 +888,60 @@ html.embed-floating-widget #root {
 
 .page {
   padding: 16px;
+}
+
+.page-step-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-step-header h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #172033;
+}
+
+.page-step-subtitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #5b6573;
+}
+
+.page-step-context {
+  margin: 0;
+}
+
+.tailor-hero .page-step-subtitle {
+  margin-top: 2px;
+}
+
+.tailor-hero-resume-line {
+  margin-top: 6px;
+}
+
+.api-key-inline-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff8e6;
+  border: 1px solid #f0d68a;
+  color: #3d3319;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.api-key-inline-banner p {
+  margin: 0;
+}
+
+.api-key-inline-banner strong {
+  color: #2a2210;
 }
 
 .stack {

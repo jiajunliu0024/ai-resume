@@ -1,24 +1,29 @@
 import { useState } from "react";
 import { type ScanJobPageResult } from "../../application/scanJobPage";
 import { type ExtractedRequirement } from "../../domain/jobDescription";
+import { APP_FLOW_STEPS } from "../../shared/appFlowSteps";
 import { Card } from "../components/Card";
 import { PrimaryButton } from "../components/PrimaryButton";
 
 // ScanPage is intentionally a presentational component.
 // It receives state and callbacks from App instead of calling Chrome or OpenAI directly.
 type ScanPageProps = {
+  apiKeyConfigured: boolean;
   error: string | null;
   isScanning: boolean;
   scannedJob: ScanJobPageResult | null;
   onNext: () => void;
+  onOpenSettings: () => void;
   onScan: () => void;
 };
 
 export function ScanPage({
+  apiKeyConfigured,
   error,
   isScanning,
   scannedJob,
   onNext,
+  onOpenSettings,
   onScan,
 }: ScanPageProps) {
   const [selectedInsight, setSelectedInsight] =
@@ -50,13 +55,28 @@ export function ScanPage({
 
   return (
     <main className="page stack">
+      {!apiKeyConfigured ? (
+        <div className="api-key-inline-banner" role="status">
+          <p>
+            <strong>API key required to scan.</strong> Add your provider key in Settings (menu,
+            top right) to run AI extraction on this tab. Your key is stored only on this device.
+          </p>
+          <PrimaryButton type="button" variant="secondary" onClick={onOpenSettings}>
+            Open Settings
+          </PrimaryButton>
+        </div>
+      ) : null}
+
+      <header className="page-step-header">
+        <h1>{APP_FLOW_STEPS.scan.label}</h1>
+        <p className="page-step-subtitle">{APP_FLOW_STEPS.scan.pageSubtitle}</p>
+      </header>
+
       <Card tone="soft">
         <div className="center stack">
           <div className="large-icon">⌕</div>
-          <h1>Scan Job Page</h1>
-          <p>
-            Read the current tab and prepare the job description for keyword
-            extraction.
+          <p className="muted">
+            When you are ready, capture text from the active tab and run structured extraction.
           </p>
           <PrimaryButton type="button" disabled={isScanning} onClick={onScan}>
             {isScanning ? "Scanning..." : "Scan Current Page"}
@@ -132,15 +152,15 @@ export function ScanPage({
           </div>
         ) : (
           <p className="muted">
-            Click scan to read text from the active browser tab. AI keyword
-            extraction will be connected in a later step.
+            Run <strong>Scan Current Page</strong> to read the active tab and extract requirements and
+            keywords with AI (requires an API key).
           </p>
         )}
       </Card>
 
       <div className="footer-actions sticky-footer-actions">
         <PrimaryButton type="button" disabled={!scannedJob} onClick={onNext}>
-          Select Resume
+          Next: Resume
         </PrimaryButton>
       </div>
 
