@@ -7,6 +7,7 @@ import type { ExtractedRequirement } from "../../domain/jobDescription";
 import type { Resume } from "../../domain/resume";
 import type { AiProviderId } from "../../infrastructure/ai/openAiJobInsightsExtractor";
 import { downloadTextFile } from "../../infrastructure/export/downloadTextFile";
+import { APP_FLOW_STEPS } from "../../shared/appFlowSteps";
 import { Card } from "../components/Card";
 import { PrimaryButton } from "../components/PrimaryButton";
 
@@ -129,8 +130,11 @@ export function ResultsPage({
   if (!job || !resume) {
     return (
       <main className="page stack">
+        <header className="page-step-header">
+          <h1>{APP_FLOW_STEPS.results.label}</h1>
+          <p className="page-step-subtitle">{APP_FLOW_STEPS.results.pageSubtitle}</p>
+        </header>
         <Card>
-          <h2 className="tailor-pdf-trigger-title">Cover letter</h2>
           <p className="muted">
             Scan a job and select a resume first, then return here from the Tailor step.
           </p>
@@ -149,18 +153,21 @@ export function ResultsPage({
 
   return (
     <main className="page stack">
+      <header className="page-step-header">
+        <h1>{APP_FLOW_STEPS.results.label}</h1>
+        <p className="page-step-subtitle">{APP_FLOW_STEPS.results.pageSubtitle}</p>
+        <p className="company-name page-step-context">
+          {job.title} · {job.company}
+        </p>
+      </header>
+
       <Card>
         <div className="cover-letter-card-head">
-          <h2 className="tailor-pdf-trigger-title">Cover letter</h2>
+          <h2 className="tailor-pdf-trigger-title">Letter inputs</h2>
           <p className="muted cover-letter-job-inline">
-            {job.title} · {job.company}
+            Choose what to send to the model (checked items only).
           </p>
         </div>
-        <p className="helper-text">
-          Pick JD <strong>keywords</strong>, <strong>key requirements</strong>, and{" "}
-          <strong>resume excerpts</strong> below. Only checked items are sent to the model. Add your
-          API key in Settings if needed.
-        </p>
 
         <div className="cover-letter-sources">
           <section className="cover-letter-source-block">

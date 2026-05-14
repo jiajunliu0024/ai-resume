@@ -319,10 +319,12 @@ export function App() {
             <div ref={stepPanelRef} className="app-step-panel">
               {currentStep === "scan" ? (
                 <ScanPage
+                  apiKeyConfigured={Boolean(apiKey.trim())}
                   error={scanError}
                   isScanning={isScanning}
                   scannedJob={scannedJob}
                   onNext={() => setCurrentStep("resume")}
+                  onOpenSettings={() => setSettingsOpen(true)}
                   onScan={handleScanCurrentPage}
                 />
               ) : currentStep === "resume" ? (

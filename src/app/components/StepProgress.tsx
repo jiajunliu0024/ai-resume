@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
-
-const labels = ["Scan", "Resume", "Tailor", "Letter"];
+import { APP_STEP_PROGRESS_LABELS } from "../../shared/appFlowSteps";
 
 type StepProgressProps = {
   currentStepIndex: number;
@@ -24,7 +23,7 @@ export function StepProgress({ currentStepIndex }: StepProgressProps) {
           >
             <div ref={stripRef} className="steps-strip">
               <div className="step-dots">
-                {labels.map((label, index) => {
+                {APP_STEP_PROGRESS_LABELS.map((label, index) => {
                   const state =
                     index < currentStepIndex
                       ? "done"
@@ -42,7 +41,7 @@ export function StepProgress({ currentStepIndex }: StepProgressProps) {
                 })}
               </div>
               <div className="step-labels">
-                {labels.map((label, index) => (
+                {APP_STEP_PROGRESS_LABELS.map((label, index) => (
                   <span
                     key={label}
                     className={index === currentStepIndex ? "active" : ""}

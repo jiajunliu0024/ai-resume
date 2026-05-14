@@ -6,6 +6,7 @@ import {
   supportsResumeDeepseekTextParsing,
   supportsResumePdfVisionParsing,
 } from "../../infrastructure/ai/aiResumeParser";
+import { APP_FLOW_STEPS } from "../../shared/appFlowSteps";
 import { Card } from "../components/Card";
 import { PrimaryButton } from "../components/PrimaryButton";
 
@@ -106,14 +107,11 @@ export function ResumePage({
 
   return (
     <main className="page stack">
-      <section className="stack">
-        <h1>Select Resume</h1>
-        <p className="muted">
-          Choose the resume foundation first. The next Tailor page handles AI
-          rewrite and section-level editing.
-        </p>
-        {jobTitle && <p className="company-name">For: {jobTitle}</p>}
-      </section>
+      <header className="page-step-header">
+        <h1>{APP_FLOW_STEPS.resume.label}</h1>
+        <p className="page-step-subtitle">{APP_FLOW_STEPS.resume.pageSubtitle}</p>
+        {jobTitle ? <p className="company-name page-step-context">For: {jobTitle}</p> : null}
+      </header>
 
       {!hasApiKey ? (
         <Card tone="soft">

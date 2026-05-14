@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy Policy — Resume Tailor</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --text: #1a1a1a;
+        --muted: #444;
+        --bg: #fff;
+        --border: #e0e0e0;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --text: #f0f0f0;
+          --muted: #bbb;
+          --bg: #121212;
+          --border: #333;
+        }
+      }
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+        line-height: 1.55;
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 1.5rem 1.25rem 3rem;
+        color: var(--text);
+        background: var(--bg);
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+      }
+      .meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+      }
+      h2 {
+        font-size: 1.1rem;
+        margin-top: 1.75rem;
+      }
+      ul {
+        padding-left: 1.25rem;
+      }
+      li {
+        margin: 0.35rem 0;
+      }
+      a {
+        color: inherit;
+      }
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 2rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Privacy Policy — Resume Tailor</h1>
+    <p class="meta">Effective date: <time datetime="2026-05-15">15 May 2026</time></p>
+
+    <p>
+      This policy describes how the <strong>Resume Tailor</strong> Chrome extension (“the extension”)
+      handles information. The extension is built to be <strong>local-first</strong>: it does not
+      require an account, and it does not use a separate application server operated by the
+      extension author to store your résumé or cover letters.
+    </p>
+
+    <h2>1. Who this policy applies to</h2>
+    <p>
+      You use the extension in Google Chrome (or another compatible Chromium browser). By using the
+      extension, you agree to this policy. If you do not agree, do not use the extension.
+    </p>
+
+    <h2>2. Data the extension processes</h2>
+    <p>The extension may process the following categories of data on your device or when you choose to use AI features:</p>
+    <ul>
+      <li>
+        <strong>API credentials you provide.</strong> You may enter an API key for an AI provider
+        (for example OpenAI or DeepSeek). The key is stored <strong>locally</strong> in the
+        browser’s extension storage so you do not have to re-enter it every session.
+      </li>
+      <li>
+        <strong>Provider and model-related settings.</strong> For example, which provider you
+        selected. Stored locally.
+      </li>
+      <li>
+        <strong>Résumé content.</strong> Text and structured fields parsed from résumés you upload
+        (including from PDF files), and edits you make inside the extension. Stored locally unless
+        you copy or export it elsewhere yourself.
+      </li>
+      <li>
+        <strong>Job description content.</strong> Text read from the active browser tab when you
+        run a scan, plus structured fields derived from that text (for example requirements and
+        keywords). Stored locally after a successful scan.
+      </li>
+      <li>
+        <strong>Generated outputs.</strong> AI-generated suggestions, tailored text, and cover
+        letters produced when you request them. Stored locally as part of normal use of the
+        extension.
+      </li>
+    </ul>
+
+    <h2>3. Where data is stored</h2>
+    <p>
+      Data used by the extension is stored <strong>on your device</strong> using Chrome’s extension
+      storage APIs (for example <code>chrome.storage.local</code>). The extension does not sync
+      this data to a custom backend operated by the extension author as part of this open-source
+      project.
+    </p>
+    <p>
+      Uninstalling the extension or clearing extension data through Chrome may remove locally stored
+      data; refer to Google’s documentation for your browser version.
+    </p>
+
+    <h2>4. Third-party AI providers</h2>
+    <p>
+      When you use features that call an AI model, the extension sends the minimum content needed
+      for that request (for example job text, résumé excerpts, or prompts you trigger) directly from
+      your browser to the <strong>third-party provider</strong> you configured (for example OpenAI or
+      DeepSeek), using <strong>your</strong> API key.
+    </p>
+    <p>
+      Those requests are governed by the <strong>privacy policy and terms of that provider</strong>,
+      not by this document alone. You should review the provider’s policy before entering a key or
+      sending sensitive information.
+    </p>
+    <p>The extension’s manifest declares network access only to the provider API hosts required for those calls.</p>
+
+    <h2>5. Permissions and why they are used</h2>
+    <ul>
+      <li>
+        <strong>activeTab</strong> — To read page content from the tab you are using when you take
+        an explicit action (for example scanning a job page).
+      </li>
+      <li>
+        <strong>storage</strong> — To save your settings, API key, scanned jobs, résumés, and
+        results locally on your device.
+      </li>
+      <li>
+        <strong>scripting</strong> — To inject or coordinate scripts when needed for the extension
+        UI on web pages (for example a floating panel), in line with Chrome’s security model.
+      </li>
+      <li>
+        <strong>Host permissions for AI APIs</strong> — To contact the AI provider endpoints you
+        choose when generating or parsing content.
+      </li>
+    </ul>
+
+    <h2>6. Data sharing with the extension author</h2>
+    <p>
+      This project does not include a built-in “phone home” telemetry service. Routine use of the
+      extension does not upload your résumé, cover letter, or API key to a server operated by the
+      extension author solely because you installed the extension.
+    </p>
+    <p>
+      If you install the extension from the Chrome Web Store, Google may collect usage and crash
+      data according to <a href="https://policies.google.com/privacy">Google’s privacy policy</a>.
+    </p>
+
+    <h2>7. Children’s privacy</h2>
+    <p>
+      The extension is not directed at children under 13 (or the age required in your jurisdiction).
+      Do not use it if you are not old enough to consent to processing of your data where you live.
+    </p>
+
+    <h2>8. Changes to this policy</h2>
+    <p>
+      This policy may be updated when the extension or store requirements change. The “Effective date”
+      at the top will be revised when material changes are made. Continued use after an update
+      means you accept the revised policy.
+    </p>
+
+    <h2>9. Contact</h2>
+    <p>
+      For questions about this privacy policy or the open-source project, use the issue tracker or
+      contact channel linked from the <strong>README</strong> of the GitHub repository where you
+      obtained Resume Tailor (update that README with your preferred email or support link for your
+      published build).
+    </p>
+
+    <hr />
+    <p class="meta">
+      Resume Tailor — Chrome extension. This page is the privacy policy for store listing and user
+      disclosure purposes.
+    </p>
+  </body>
+</html>
