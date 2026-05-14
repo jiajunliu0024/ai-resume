@@ -17,6 +17,13 @@ Your **API key** and parsed data are stored **locally** in the extension (Chrome
 
 ---
 
+## Contact
+
+- **Email:** [jiajunliu0024@gmail.com](mailto:jiajunliu0024@gmail.com) — privacy policy, Chrome Web Store listing, or general questions about this project.
+- **GitHub Issues:** [github.com/jiajunliu0024/ai-resume/issues](https://github.com/jiajunliu0024/ai-resume/issues) — bug reports and feature discussion (update the URL if you use a fork).
+
+---
+
 ## Requirements
 
 - **Google Chrome** (or another Chromium browser that supports Manifest V3 extensions).
@@ -94,8 +101,6 @@ These links describe how publishing works; they are not project-specific advice:
 | Disabling Jekyll with `.nojekyll` | [Creating a GitHub Pages site — Static site generators](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#static-site-generators) |
 
 Ensure the branch and folder selected in **Settings → Pages** (e.g. `feature-ui` + `/docs`) match the branch where `docs/privacy-policy.html` exists, then push and wait for deployment (GitHub notes delays up to ~10 minutes in some cases: [Viewing your published site](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#viewing-your-published-site)).
-
-Before publishing, update the **Contact** section in `docs/privacy-policy.html` if you want a specific email or support link for your listing.
 
 ---
 
