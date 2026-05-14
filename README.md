@@ -64,6 +64,24 @@ npm run typecheck
 
 ---
 
+## Privacy policy (Chrome Web Store)
+
+Google requires a **public HTTPS URL** to a privacy policy when your extension handles user data (this extension stores API keys, résumés, and job text locally and sends content to AI providers you configure).
+
+- **Policy files in this repo**
+  - [`docs/privacy-policy.html`](docs/privacy-policy.html) — use this as the page you host (recommended for the store URL).
+  - [`docs/PRIVACY_POLICY.md`](docs/PRIVACY_POLICY.md) — same content in Markdown for editing and version control.
+
+**How to get a URL:** enable [GitHub Pages](https://pages.github.com/) for this repository (for example publish from the `/docs` folder on the `main` branch). Your policy URL will look like:
+
+`https://<your-username>.github.io/<repository-name>/privacy-policy.html`
+
+Paste that URL in the Chrome Web Store developer dashboard under **Privacy practices** (or the field that asks for your privacy policy link).
+
+Before publishing, update the **Contact** section in `docs/privacy-policy.html` with your real contact (email or GitHub repo link).
+
+---
+
 ## How to use (walkthrough)
 
 Below, screenshots are taken from the promotional captures in [`public/store-promo/`](public/store-promo/) so the README stays self-contained in the repo. Your live UI may differ slightly as the product evolves.
