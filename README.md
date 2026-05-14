@@ -66,19 +66,36 @@ npm run typecheck
 
 ## Privacy policy (Chrome Web Store)
 
-Google requires a **public HTTPS URL** to a privacy policy when your extension handles user data (this extension stores API keys, résumés, and job text locally and sends content to AI providers you configure).
+Google requires a **public HTTPS URL** that loads your privacy policy when the extension handles user data.
 
-- **Policy files in this repo**
-  - [`docs/privacy-policy.html`](docs/privacy-policy.html) — use this as the page you host (recommended for the store URL).
-  - [`docs/PRIVACY_POLICY.md`](docs/PRIVACY_POLICY.md) — same content in Markdown for editing and version control.
+### URL to paste in the Chrome Web Store
 
-**How to get a URL:** enable [GitHub Pages](https://pages.github.com/) for this repository (for example publish from the `/docs` folder on the `main` branch). Your policy URL will look like:
+Use the **direct** policy page only (no redirects, no site root):
 
-`https://<your-username>.github.io/<repository-name>/privacy-policy.html`
+`https://<your-github-username>.github.io/<repository-name>/privacy-policy.html`
 
-Paste that URL in the Chrome Web Store developer dashboard under **Privacy practices** (or the field that asks for your privacy policy link).
+Example: `https://jiajunliu0024.github.io/ai-resume/privacy-policy.html`
 
-Before publishing, update the **Contact** section in `docs/privacy-policy.html` with your real contact (email or GitHub repo link).
+The policy text lives in this repo as [`docs/privacy-policy.html`](docs/privacy-policy.html).  
+[`docs/PRIVACY_POLICY.md`](docs/PRIVACY_POLICY.md) is the same content in Markdown for editing.
+
+[`docs/index.html`](docs/index.html) is an optional **static** landing page at the site root (manual link only — **do not** use the root URL as the store policy link).  
+[`docs/.nojekyll`](docs/.nojekyll) disables the default Jekyll build for the publishing folder ([official note](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#static-site-generators)).
+
+### GitHub Pages rules (official documentation)
+
+These links describe how publishing works; they are not project-specific advice:
+
+| Topic | Official doc |
+|-------|----------------|
+| Project site URL (`https://<owner>.github.io/<repositoryname>`) | [About GitHub Pages — Types of sites](https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#types-of-github-pages-sites) |
+| Publishing from `/` or `/docs` on a branch | [Configuring a publishing source — Publishing from a branch](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-from-a-branch) |
+| Entry file (`index.html`, `index.md`, or `README.md` at the top of the publishing folder) | [Creating a GitHub Pages site — Creating your site](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#creating-your-site) |
+| Disabling Jekyll with `.nojekyll` | [Creating a GitHub Pages site — Static site generators](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#static-site-generators) |
+
+Ensure the branch and folder selected in **Settings → Pages** (e.g. `feature-ui` + `/docs`) match the branch where `docs/privacy-policy.html` exists, then push and wait for deployment (GitHub notes delays up to ~10 minutes in some cases: [Viewing your published site](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#viewing-your-published-site)).
+
+Before publishing, update the **Contact** section in `docs/privacy-policy.html` if you want a specific email or support link for your listing.
 
 ---
 
