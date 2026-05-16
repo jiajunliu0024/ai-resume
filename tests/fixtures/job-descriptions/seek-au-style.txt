@@ -1,0 +1,7 @@
+Data Engineer    Alpine Labs Pty Ltd    Posted 10 May 2026
+
+About the role
+You will design and operate REST APIs, Web Services gateways, and OData services backed by SQL Server. Robotic Process Automation exposure is a plus.
+
+requirements
+Demonstrated Business Analysis artefacts, REST integration experience, plus strong communication and problem-solving habits in cross-functional teams.

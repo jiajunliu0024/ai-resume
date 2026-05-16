@@ -30,7 +30,7 @@ Your **API key** and parsed data are stored **locally** in the extension (Chrome
 - **Node.js** (for building from source; use a version compatible with the toolchain listed in `package.json` / lockfile).
 - A valid **API key** for your chosen provider (host permissions in `public/manifest.json` include the provider API hosts used by the app).
 
-**Where to get keys / which tiers are often cheapest to try:** see **[`docs/AI_PROVIDER_API_KEYS.md`](docs/AI_PROVIDER_API_KEYS.md)** (signup links + free-/trial-oriented notes).
+**Where to get keys / which tiers are often cheapest to try:** see **[`docs/AI_PROVIDER_API_KEYS.md`](docs/AI_PROVIDER_API_KEYS.md)** (signup links + free-/trial-oriented notes). Runtime API smoke tests stay local (inspect the extension popup in DevTools → **Network** during Scan / Résumé / Cover letter — do not commit key-bearing notes to the repo).
 
 ---
 
@@ -66,7 +66,9 @@ Opens the Vite dev server for the popup UI. Full Chrome APIs (tabs, storage, scr
 Quality checks used in this repo:
 
 ```bash
-npm run verify   # lint + TypeScript + production build
+npm run verify   # lint + unit tests + TypeScript + production build
+npm run test     # Vitest once
+npm run test:watch
 npm run lint     # ESLint only
 npm run typecheck
 ```
@@ -108,37 +110,14 @@ Ensure the branch and folder selected in **Settings → Pages** (e.g. `feature-u
 
 ## How to use (walkthrough)
 
-Below, screenshots are taken from the promotional captures in [`public/store-promo/`](public/store-promo/) so the README stays self-contained in the repo. Your live UI may differ slightly as the product evolves.
+Steps are ordered to match the in-app progress bar (**Scan job → Resume → Tailor → Cover letter**). The live UI labels may evolve slightly across releases.
 
-### 1. Scan the job page
+1. **Scan job** — Open the job posting in a normal browser tab; in the extension tap **Scan current page** after saving your provider + API key in **Settings**.
+2. **Resume** — Upload a **PDF** résumé (or choose one already in the library) and wait for parsing.
+3. **Tailor** — Edit structured sections and use **AI rewrite** where you want provider-backed wording; review changes before proceeding.
+4. **Cover letter** — Select JD keywords/requirements and résumé excerpts, **Generate**, then **Copy** or **Download PDF**.
 
-Open the job listing in a normal tab. In **Resume Tailor**, go to **Scan job**, add your **API key** in **Settings** if you have not already, then tap **Scan current page**. Review extracted requirements and keywords before continuing.
-
-![Scan job — capture the posting from the active tab and run AI extraction](public/store-promo/promo-01-scan-1280x800.png)
-
-### 2. Select or upload your résumé
-
-On **Resume**, upload one or more **PDF** files or select an existing parsed résumé. The flow uses the scanned job context when you arrived from the scan step.
-
-![Resume — upload PDFs and choose which résumé to tailor](public/store-promo/promo-02-resume-1280x800.png)
-
-### 3. Tailor your résumé to the job
-
-On **Tailor**, edit structured sections, review match hints, and use **AI rewrite** where available so wording reflects the job without inventing experience you did not provide.
-
-![Tailor — align sections and scores to the scanned job](public/store-promo/promo-03-tailor-1280x800.png)
-
-### 4. Use AI rewrite where it helps
-
-Section-level AI tools let you refine bullets and summaries while you stay in control of what you accept.
-
-![AI rewrite — refine sections with provider-backed suggestions](public/store-promo/promo-04-ai-rewrite-1280x800.png)
-
-### 5. Generate your cover letter
-
-On **Cover letter**, tick the **keywords**, **requirements**, and **résumé snippets** you want included, run **Generate**, then **copy** or **Download PDF**.
-
-![Cover letter — pick sources, generate, copy or download](public/store-promo/promo-05-results-1280x800.png)
+`npm run verify` runs lint, **`npm run test`** (Vitest), TypeScript check, and the production build — not live vendor APIs — use DevTools Network or curl while testing locally without uploading secret notes.
 
 ---
 

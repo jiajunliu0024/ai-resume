@@ -9,7 +9,6 @@ export default tseslint.config(
     ignores: [
       "dist/**",
       "node_modules/**",
-      "v2_resume_tailor_ui 2/**",
       "coverage/**",
       "*.config.js",
       "*.config.ts",

@@ -29,9 +29,14 @@ export function scanJobPage(input: ScanJobPageInput): ScanJobPageResult {
   // The App layer currently overwrites these insights with AI output.
   const insights = extractJobInsights(input.pageText);
 
+  const mergedCompany =
+    insights.company?.trim().length ?
+      insights.company.trim()
+    : "Unknown company";
+
   return {
     title: input.pageTitle,
-    company: "Unknown company",
+    company: mergedCompany,
     sourceUrl: input.sourceUrl,
     rawText: input.pageText,
     requirements: insights.requirements,

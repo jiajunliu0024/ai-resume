@@ -105,7 +105,7 @@ Reusable UI should be extracted only when repetition appears naturally, for exam
 
 ## Testing And Verification
 
-After substantive code changes, run **`npm run verify`** from the project root. That runs ESLint on `src/`, TypeScript `tsc --noEmit`, and a production Vite build. Use **`npm run lint`** for a faster lint-only pass.
+After substantive code changes, run **`npm run verify`** from the project root. That runs ESLint on `src/` and **`tests/`**, **Vitest** over **`tests/**/*.test.ts`** (`tests/unit/`, `tests/integration/`, `tests/dom/`), TypeScript `tsc --noEmit`, and a production Vite build. Use **`npm run lint`** for a faster lint-only pass, or **`npm run test`** for tests only (see **`npm run test:watch`**).
 
 For each completed feature, verify the narrow behavior that changed:
 

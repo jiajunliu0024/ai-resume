@@ -11,8 +11,9 @@ import {
   renderPdfPagesToImageDataUrls,
 } from "../infrastructure/parser/pdfResumeParser";
 import { parseResumeSections, type ParsedResumeSections } from "./parseResumeSections";
+import { CURRENT_RESUME_PARSER_VERSION } from "./resumeParseStatus";
 
-export const CURRENT_RESUME_PARSER_VERSION = "resume-parser-v3-local-merge-v1";
+export { CURRENT_RESUME_PARSER_VERSION, isResumeParsed } from "./resumeParseStatus";
 
 type ParseResumeOptions = {
   apiKey: string;
@@ -62,15 +63,6 @@ function buildResume(
     createdAt: now,
     updatedAt: now,
   };
-}
-
-export function isResumeParsed(resume: Resume) {
-  return (
-    resume.parseStatus === "parsed" &&
-    resume.parserVersion === CURRENT_RESUME_PARSER_VERSION &&
-    Boolean(resume.basicInfoFields) &&
-    Boolean(resume.experienceItems?.length || resume.educationItems?.length)
-  );
 }
 
 /**
