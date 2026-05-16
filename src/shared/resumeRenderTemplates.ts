@@ -21,7 +21,7 @@ export const RESUME_RENDER_TEMPLATES: {
 }[] = [
   {
     id: "classic-sample",
-    name: "Classic (project sample.tex)",
+    name: "Classic",
     description:
       "Classic header, navy section accents — closest to a traditional one-column résumé PDF.",
     inspiredBy: "Professional single-column résumés.",

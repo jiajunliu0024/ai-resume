@@ -21,7 +21,16 @@ type OpenAiJobInsightsResponse = {
   confidence: number;
 };
 
-export type AiProviderId = "openai" | "deepseek";
+/** OpenAI Chat Completions–compatible HTTPS APIs (Bearer key, `/v1/chat/completions` shape where noted). */
+export type AiProviderId =
+  | "openai"
+  | "deepseek"
+  | "gemini"
+  | "groq"
+  | "mistral"
+  | "xai"
+  | "openrouter"
+  | "together";
 
 export type AiProviderChatCompletionConfig = {
   displayName: string;
@@ -35,12 +44,58 @@ const providerConfigs: Record<AiProviderId, AiProviderChatCompletionConfig> = {
     endpoint: "https://api.openai.com/v1/chat/completions",
     model: "gpt-4o-mini",
   },
+  gemini: {
+    displayName: "Google Gemini (OpenAI-compat)",
+    endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    model: "gemini-2.0-flash",
+  },
   deepseek: {
     displayName: "DeepSeek",
     endpoint: "https://api.deepseek.com/chat/completions",
     model: "deepseek-chat",
   },
+  groq: {
+    displayName: "Groq",
+    endpoint: "https://api.groq.com/openai/v1/chat/completions",
+    model: "llama-3.3-70b-versatile",
+  },
+  mistral: {
+    displayName: "Mistral AI",
+    endpoint: "https://api.mistral.ai/v1/chat/completions",
+    model: "mistral-small-latest",
+  },
+  xai: {
+    displayName: "xAI (Grok)",
+    endpoint: "https://api.x.ai/v1/chat/completions",
+    model: "grok-2-latest",
+  },
+  openrouter: {
+    displayName: "OpenRouter",
+    endpoint: "https://openrouter.ai/api/v1/chat/completions",
+    model: "openai/gpt-4o-mini",
+  },
+  together: {
+    displayName: "Together AI",
+    endpoint: "https://api.together.xyz/v1/chat/completions",
+    model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+  },
 };
+
+/** Stable order for settings UI dropdowns */
+export const AI_PROVIDER_IDS_ORDERED: AiProviderId[] = [
+  "openai",
+  "gemini",
+  "groq",
+  "mistral",
+  "deepseek",
+  "xai",
+  "together",
+  "openrouter",
+];
+
+export function isAiProviderId(value: string): value is AiProviderId {
+  return Object.prototype.hasOwnProperty.call(providerConfigs, value);
+}
 
 export function getAiProviderChatCompletionConfig(
   providerId: AiProviderId,
@@ -107,7 +162,7 @@ export async function extractJobInsightsWithAiProvider(
   apiKey: string,
   providerId: AiProviderId,
 ): Promise<ExtractJobInsightsResult> {
-  const provider = providerConfigs[providerId];
+  const provider = getAiProviderChatCompletionConfig(providerId);
 
   // This extension calls the AI provider directly because the product is local-first and
   // the user brings their own API key. No custom backend receives the resume/JD.

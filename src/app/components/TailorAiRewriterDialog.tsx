@@ -57,7 +57,7 @@ function defaultSelectedRequirementIds(job: ScanJobPageResult | null): Set<strin
   return new Set(pick.map((item) => item.id));
 }
 
-/** Draft text and API debug logs live in React state only; each Generate/Regenerate calls the provider (no extension storage on this path). */
+/** Draft text stays in React state only; Generate/Regenerate calls the user's provider directly. */
 export function TailorAiRewriterDialog({
   job,
   context,
@@ -81,8 +81,6 @@ export function TailorAiRewriterDialog({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [wordCountNote, setWordCountNote] = useState<string | null>(null);
-  const [requestLogText, setRequestLogText] = useState("");
-  const [responseLogText, setResponseLogText] = useState("");
 
   const providerMeta = getAiProviderChatCompletionConfig(aiProvider);
   const providerLabel = `${providerMeta.displayName} · ${providerMeta.model}`;
@@ -131,9 +129,6 @@ export function TailorAiRewriterDialog({
         apiKey: apiKey.trim(),
         providerId: aiProvider,
       });
-
-      setRequestLogText(JSON.stringify(outcome.requestJson, null, 2));
-      setResponseLogText(JSON.stringify(outcome.responseJson ?? null, null, 2));
 
       if (outcome.ok) {
         setSuggestion(outcome.rewritten);
@@ -375,26 +370,6 @@ export function TailorAiRewriterDialog({
 
           {error ? <p className="error-text">{error}</p> : null}
 
-          {requestLogText || responseLogText ? (
-            <div className="json-debug-panel tailor-rewriter-api-log">
-              <p className="helper-text tailor-rewriter-api-log-note">
-                Last request/response (session only; Authorization header is never shown). Each
-                Generate or Regenerate calls your provider again.
-              </p>
-              {requestLogText ? (
-                <details open>
-                  <summary>Request JSON (body)</summary>
-                  <pre>{requestLogText}</pre>
-                </details>
-              ) : null}
-              {responseLogText ? (
-                <details open>
-                  <summary>Response JSON</summary>
-                  <pre>{responseLogText}</pre>
-                </details>
-              ) : null}
-            </div>
-          ) : null}
         </div>
 
         <footer className="tailor-rewriter-footer">

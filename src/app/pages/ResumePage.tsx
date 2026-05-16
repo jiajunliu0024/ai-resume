@@ -1,10 +1,13 @@
 import { type ChangeEvent, useState } from "react";
 import { parseResume } from "../../application/parseResume";
 import { type Resume } from "../../domain/resume";
-import { type AiProviderId } from "../../infrastructure/ai/openAiJobInsightsExtractor";
 import {
-  supportsResumeDeepseekTextParsing,
+  type AiProviderId,
+  getAiProviderChatCompletionConfig,
+} from "../../infrastructure/ai/openAiJobInsightsExtractor";
+import {
   supportsResumePdfVisionParsing,
+  supportsResumePlainTextAiParsing,
 } from "../../infrastructure/ai/aiResumeParser";
 import { APP_FLOW_STEPS } from "../../shared/appFlowSteps";
 import { Card } from "../components/Card";
@@ -67,13 +70,14 @@ export function ResumePage({
       return;
     }
 
+    const providerDisplay = getAiProviderChatCompletionConfig(aiProvider).displayName;
     setIsParsingPdf(true);
     setUploadError(null);
     setParseMessage(
       supportsResumePdfVisionParsing(aiProvider)
-        ? "Rendering PDF pages and sending images to OpenAI (no extracted text in the AI request)..."
-        : supportsResumeDeepseekTextParsing(aiProvider)
-          ? "Extracting PDF text and sending it to DeepSeek for structured JSON (your key, provider API only)..."
+        ? `Rendering PDF pages and sending images to ${providerDisplay} (extracted plain text is not included in this request).`
+        : supportsResumePlainTextAiParsing(aiProvider)
+          ? `Extracting PDF text and sending it to ${providerDisplay} for structured parsing (your key, provider API only).`
           : "Extracting PDF text and using local parser...",
     );
 
@@ -185,9 +189,9 @@ export function ResumePage({
             <small>
               {isParsingPdf
                 ? supportsResumePdfVisionParsing(aiProvider)
-                  ? "Rendering PDF pages → OpenAI vision (JSON)"
-                  : supportsResumeDeepseekTextParsing(aiProvider)
-                    ? "PDF text → DeepSeek structured parse (JSON)"
+                  ? "Vision: PDF pages as images → your provider (JSON)."
+                  : supportsResumePlainTextAiParsing(aiProvider)
+                    ? "Plain text from PDF → your provider structured parse."
                     : "Local text extraction + rule-based parsing"
                 : hasApiKey
                   ? "Multiple PDFs supported"

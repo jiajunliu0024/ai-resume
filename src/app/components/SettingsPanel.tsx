@@ -1,6 +1,10 @@
 import { useRef, useState } from "react";
 import { CSSTransition, SwitchTransition } from "react-transition-group";
-import { type AiProviderId } from "../../infrastructure/ai/openAiJobInsightsExtractor";
+import {
+  AI_PROVIDER_IDS_ORDERED,
+  getAiProviderChatCompletionConfig,
+  type AiProviderId,
+} from "../../infrastructure/ai/openAiJobInsightsExtractor";
 import { Card } from "./Card";
 import { PrimaryButton } from "./PrimaryButton";
 
@@ -125,8 +129,14 @@ export function SettingsPanel({
                           onAiProviderChange(event.target.value as AiProviderId)
                         }
                       >
-                        <option value="openai">OpenAI</option>
-                        <option value="deepseek">DeepSeek</option>
+                        {AI_PROVIDER_IDS_ORDERED.map((id) => {
+                          const cfg = getAiProviderChatCompletionConfig(id);
+                          return (
+                            <option key={id} value={id}>
+                              {cfg.displayName}
+                            </option>
+                          );
+                        })}
                       </select>
 
                       <label

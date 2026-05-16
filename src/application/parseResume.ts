@@ -3,16 +3,17 @@ import { type AiProviderId } from "../infrastructure/ai/openAiJobInsightsExtract
 import {
   parseResumeWithAiProviderFromPdfPageImages,
   parseResumeWithAiProviderFromPlainText,
-  supportsResumeDeepseekTextParsing,
   supportsResumePdfVisionParsing,
+  supportsResumePlainTextAiParsing,
 } from "../infrastructure/ai/aiResumeParser";
 import {
   extractTextFromPdf,
   renderPdfPagesToImageDataUrls,
 } from "../infrastructure/parser/pdfResumeParser";
 import { parseResumeSections, type ParsedResumeSections } from "./parseResumeSections";
+import { CURRENT_RESUME_PARSER_VERSION } from "./resumeParseStatus";
 
-export const CURRENT_RESUME_PARSER_VERSION = "resume-parser-v3-local-merge-v1";
+export { CURRENT_RESUME_PARSER_VERSION, isResumeParsed } from "./resumeParseStatus";
 
 type ParseResumeOptions = {
   apiKey: string;
@@ -64,20 +65,11 @@ function buildResume(
   };
 }
 
-export function isResumeParsed(resume: Resume) {
-  return (
-    resume.parseStatus === "parsed" &&
-    resume.parserVersion === CURRENT_RESUME_PARSER_VERSION &&
-    Boolean(resume.basicInfoFields) &&
-    Boolean(resume.experienceItems?.length || resume.educationItems?.length)
-  );
-}
-
 /**
  * Parses a resume PDF:
- * - OpenAI + key: rasterized page images → vision chat (extracted text is not sent in that request).
- * - DeepSeek + key: extracted plain text → chat JSON parse (same provider API as Scan).
- * - Otherwise: `extractTextFromPdf` + local `parseResumeSections`.
+ * - OpenAI / Gemini + key: rasterized page images → vision chat when available (extracted plain text not sent).
+ * - Any provider + key + selectable PDF text: plain-text → chat JSON resume shape.
+ * - Otherwise: extracted text + local `parseResumeSections`.
  */
 export async function parseResume(
   title: string,
@@ -85,16 +77,14 @@ export async function parseResume(
   options: ParseResumeOptions,
 ): Promise<Resume> {
   const apiKeyTrimmed = options.apiKey.trim();
-  const useOpenAiVision =
+  const useVisionPdfAi =
     Boolean(apiKeyTrimmed) && supportsResumePdfVisionParsing(options.aiProvider);
-  const useDeepseekTextAi =
-    Boolean(apiKeyTrimmed) && supportsResumeDeepseekTextParsing(options.aiProvider);
 
   const textPromise = extractTextFromPdf(file)
     .then((text) => text.trim())
     .catch(() => "");
 
-  const imagesPromise = useOpenAiVision
+  const imagesPromise = useVisionPdfAi
     ? renderPdfPagesToImageDataUrls(file, {
         maxPages: 12,
         maxWidthPx: 1400,
@@ -105,37 +95,41 @@ export async function parseResume(
 
   const [rawText, pageImages] = await Promise.all([textPromise, imagesPromise]);
 
-  if (useOpenAiVision && pageImages.length) {
+  if (useVisionPdfAi && pageImages.length) {
     try {
       const aiSections = await parseResumeWithAiProviderFromPdfPageImages(
         pageImages,
         apiKeyTrimmed,
-        "openai",
+        options.aiProvider,
       );
 
       return buildResume(title, rawText, aiSections, "ai");
     } catch (error) {
-      console.warn("OpenAI resume vision parsing failed; falling back.", error);
+      console.warn("Resume vision parsing failed; trying plain-text AI or local fallback.", error);
     }
   }
 
-  if (useDeepseekTextAi && rawText.trim()) {
+  if (
+    Boolean(apiKeyTrimmed) &&
+    supportsResumePlainTextAiParsing(options.aiProvider) &&
+    rawText.trim()
+  ) {
     try {
       const aiSections = await parseResumeWithAiProviderFromPlainText(
         rawText,
         apiKeyTrimmed,
-        "deepseek",
+        options.aiProvider,
       );
 
       return buildResume(title, rawText, aiSections, "ai");
     } catch (error) {
-      console.warn("DeepSeek resume text parsing failed; falling back locally.", error);
+      console.warn("Resume plain-text AI parsing failed; falling back locally.", error);
     }
   }
 
   if (!rawText.trim()) {
     throw new Error(
-      "Could not read text from this PDF and no AI parse succeeded. Use a PDF with selectable text, or try OpenAI (vision) / DeepSeek (text) with a valid API key.",
+      "Could not read text from this PDF and no AI parse succeeded. Use a PDF with selectable text, or try OpenAI / Gemini for vision parsing, another listed provider with a valid API key, or check the provider error in the developer console.",
     );
   }
 

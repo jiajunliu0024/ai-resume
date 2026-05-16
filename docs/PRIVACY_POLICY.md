@@ -38,4 +38,5 @@ Material updates will be reflected by changing the effective date and the hosted
 
 ## 7. Contact
 
-Use the issue tracker or contact channel linked from the **README** of the GitHub repository where you obtained Resume Tailor. For your own published build, add a clear email or support link in that README.
+- **Email:** jiajunliu0024@gmail.com  
+- **Issues:** Use the GitHub repository’s **Issues** tab (link in the repository README).

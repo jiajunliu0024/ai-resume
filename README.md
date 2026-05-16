@@ -11,9 +11,16 @@
 | **Scan job** | Open a job posting in a tab, then run the scan from the extension. | Reads text from the **active tab** (after your action), then uses AI to extract title, company, **key requirements**, and **keywords**. |
 | **Resume** | Upload a **PDF** résumé or work with a stored one. | Parses the PDF into structured sections (with AI or local fallback, depending on provider and settings). You can keep multiple résumés and pick one. |
 | **Tailor** | Edit sections and use **AI rewrite** where offered. | Compares your résumé to the scanned job, suggests alignment, and supports section-level editing and previews (including PDF-oriented flows where implemented). |
-| **Cover letter** | Choose which **keywords**, **requirements**, and **résumé excerpts** to include, then generate. | Builds a cover letter from your selections; you can **copy** or **download** text. |
+| **Cover letter** | Choose which **keywords**, **requirements**, and **résumé excerpts** to include, then generate. | Builds a cover letter from your selections; you can **copy** or **download a PDF**. |
 
 Your **API key** and parsed data are stored **locally** in the extension (Chrome `storage`). The extension does not send your résumé or letters to a separate app server defined in this repo.
+
+---
+
+## Contact
+
+- **Email:** [jiajunliu0024@gmail.com](mailto:jiajunliu0024@gmail.com) — privacy policy, Chrome Web Store listing, or general questions about this project.
+- **GitHub Issues:** [github.com/jiajunliu0024/ai-resume/issues](https://github.com/jiajunliu0024/ai-resume/issues) — bug reports and feature discussion (update the URL if you use a fork).
 
 ---
 
@@ -22,6 +29,8 @@ Your **API key** and parsed data are stored **locally** in the extension (Chrome
 - **Google Chrome** (or another Chromium browser that supports Manifest V3 extensions).
 - **Node.js** (for building from source; use a version compatible with the toolchain listed in `package.json` / lockfile).
 - A valid **API key** for your chosen provider (host permissions in `public/manifest.json` include the provider API hosts used by the app).
+
+**Where to get keys / which tiers are often cheapest to try:** see **[`docs/AI_PROVIDER_API_KEYS.md`](docs/AI_PROVIDER_API_KEYS.md)** (signup links + free-/trial-oriented notes). Runtime API smoke tests stay local (inspect the extension popup in DevTools → **Network** during Scan / Résumé / Cover letter — do not commit key-bearing notes to the repo).
 
 ---
 
@@ -57,7 +66,9 @@ Opens the Vite dev server for the popup UI. Full Chrome APIs (tabs, storage, scr
 Quality checks used in this repo:
 
 ```bash
-npm run verify   # lint + TypeScript + production build
+npm run verify   # lint + unit tests + TypeScript + production build
+npm run test     # Vitest once
+npm run test:watch
 npm run lint     # ESLint only
 npm run typecheck
 ```
@@ -66,55 +77,47 @@ npm run typecheck
 
 ## Privacy policy (Chrome Web Store)
 
-Google requires a **public HTTPS URL** to a privacy policy when your extension handles user data (this extension stores API keys, résumés, and job text locally and sends content to AI providers you configure).
+Google requires a **public HTTPS URL** that loads your privacy policy when the extension handles user data.
 
-- **Policy files in this repo**
-  - [`docs/privacy-policy.html`](docs/privacy-policy.html) — use this as the page you host (recommended for the store URL).
-  - [`docs/PRIVACY_POLICY.md`](docs/PRIVACY_POLICY.md) — same content in Markdown for editing and version control.
+### URL to paste in the Chrome Web Store
 
-**How to get a URL:** enable [GitHub Pages](https://pages.github.com/) for this repository (for example publish from the `/docs` folder on the `main` branch). Your policy URL will look like:
+Use the **direct** policy page only (no redirects, no site root):
 
-`https://<your-username>.github.io/<repository-name>/privacy-policy.html`
+`https://<your-github-username>.github.io/<repository-name>/privacy-policy.html`
 
-Paste that URL in the Chrome Web Store developer dashboard under **Privacy practices** (or the field that asks for your privacy policy link).
+Example: `https://jiajunliu0024.github.io/ai-resume/privacy-policy.html`
 
-Before publishing, update the **Contact** section in `docs/privacy-policy.html` with your real contact (email or GitHub repo link).
+The policy text lives in this repo as [`docs/privacy-policy.html`](docs/privacy-policy.html).  
+[`docs/PRIVACY_POLICY.md`](docs/PRIVACY_POLICY.md) is the same content in Markdown for editing.
+
+[`docs/index.html`](docs/index.html) is an optional **static** landing page at the site root (manual link only — **do not** use the root URL as the store policy link).  
+[`docs/.nojekyll`](docs/.nojekyll) disables the default Jekyll build for the publishing folder ([official note](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#static-site-generators)).
+
+### GitHub Pages rules (official documentation)
+
+These links describe how publishing works; they are not project-specific advice:
+
+| Topic | Official doc |
+|-------|----------------|
+| Project site URL (`https://<owner>.github.io/<repositoryname>`) | [About GitHub Pages — Types of sites](https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#types-of-github-pages-sites) |
+| Publishing from `/` or `/docs` on a branch | [Configuring a publishing source — Publishing from a branch](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#publishing-from-a-branch) |
+| Entry file (`index.html`, `index.md`, or `README.md` at the top of the publishing folder) | [Creating a GitHub Pages site — Creating your site](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#creating-your-site) |
+| Disabling Jekyll with `.nojekyll` | [Creating a GitHub Pages site — Static site generators](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#static-site-generators) |
+
+Ensure the branch and folder selected in **Settings → Pages** (e.g. `feature-ui` + `/docs`) match the branch where `docs/privacy-policy.html` exists, then push and wait for deployment (GitHub notes delays up to ~10 minutes in some cases: [Viewing your published site](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site#viewing-your-published-site)).
 
 ---
 
 ## How to use (walkthrough)
 
-Below, screenshots are taken from the promotional captures in [`public/store-promo/`](public/store-promo/) so the README stays self-contained in the repo. Your live UI may differ slightly as the product evolves.
+Steps are ordered to match the in-app progress bar (**Scan job → Resume → Tailor → Cover letter**). The live UI labels may evolve slightly across releases.
 
-### 1. Scan the job page
+1. **Scan job** — Open the job posting in a normal browser tab; in the extension tap **Scan current page** after saving your provider + API key in **Settings**.
+2. **Resume** — Upload a **PDF** résumé (or choose one already in the library) and wait for parsing.
+3. **Tailor** — Edit structured sections and use **AI rewrite** where you want provider-backed wording; review changes before proceeding.
+4. **Cover letter** — Select JD keywords/requirements and résumé excerpts, **Generate**, then **Copy** or **Download PDF**.
 
-Open the job listing in a normal tab. In **Resume Tailor**, go to **Scan job**, add your **API key** in **Settings** if you have not already, then tap **Scan current page**. Review extracted requirements and keywords before continuing.
-
-![Scan job — capture the posting from the active tab and run AI extraction](public/store-promo/promo-01-scan-1280x800.png)
-
-### 2. Select or upload your résumé
-
-On **Resume**, upload one or more **PDF** files or select an existing parsed résumé. The flow uses the scanned job context when you arrived from the scan step.
-
-![Resume — upload PDFs and choose which résumé to tailor](public/store-promo/promo-02-resume-1280x800.png)
-
-### 3. Tailor your résumé to the job
-
-On **Tailor**, edit structured sections, review match hints, and use **AI rewrite** where available so wording reflects the job without inventing experience you did not provide.
-
-![Tailor — align sections and scores to the scanned job](public/store-promo/promo-03-tailor-1280x800.png)
-
-### 4. Use AI rewrite where it helps
-
-Section-level AI tools let you refine bullets and summaries while you stay in control of what you accept.
-
-![AI rewrite — refine sections with provider-backed suggestions](public/store-promo/promo-04-ai-rewrite-1280x800.png)
-
-### 5. Generate your cover letter
-
-On **Cover letter**, tick the **keywords**, **requirements**, and **résumé snippets** you want included, run **Generate**, then **copy** or **download** the result.
-
-![Cover letter — pick sources, generate, copy or download](public/store-promo/promo-05-results-1280x800.png)
+`npm run verify` runs lint, **`npm run test`** (Vitest), TypeScript check, and the production build — not live vendor APIs — use DevTools Network or curl while testing locally without uploading secret notes.
 
 ---
 

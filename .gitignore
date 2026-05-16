@@ -39,6 +39,9 @@ ai_retreive.json
 CONVERSATION_SUMMARY.md
 RESUME_AI_PARSE.md
 
+# Local API verification checklist (personal / internal; do not publish to GitHub)
+docs/VERIFY_AI_APIS.md
+
 # Video files
 temp-video-output/
 video-output/
@@ -46,3 +49,6 @@ tmp_video_frames/
 
 # Zip files
 *.zip
+
+# Mark Down
+TEST.md

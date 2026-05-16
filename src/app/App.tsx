@@ -5,8 +5,9 @@ import { type ScanJobPageResult } from "../application/scanJobPage";
 import { type Resume } from "../domain/resume";
 import { readActiveTabText } from "../extension/tabs/readActiveTabText";
 import {
-  type AiProviderId,
   extractJobInsightsWithAiProvider,
+  isAiProviderId,
+  type AiProviderId,
 } from "../infrastructure/ai/openAiJobInsightsExtractor";
 import { chromeStorageRepository } from "../infrastructure/storage/chromeStorageRepository";
 import { storageKeys } from "../shared/storageKeys";
@@ -93,7 +94,7 @@ export function App() {
     void chromeStorageRepository
       .getItem<AiProviderId>(storageKeys.aiProvider)
       .then((storedProvider) => {
-        if (storedProvider === "openai" || storedProvider === "deepseek") {
+        if (storedProvider && isAiProviderId(storedProvider)) {
           setAiProvider(storedProvider);
         }
       });
