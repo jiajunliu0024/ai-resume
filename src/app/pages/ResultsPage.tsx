@@ -6,7 +6,8 @@ import type { CoverLetter } from "../../domain/coverLetter";
 import type { ExtractedRequirement } from "../../domain/jobDescription";
 import type { Resume } from "../../domain/resume";
 import type { AiProviderId } from "../../infrastructure/ai/openAiJobInsightsExtractor";
-import { downloadTextFile } from "../../infrastructure/export/downloadTextFile";
+import { downloadBlob } from "../../infrastructure/export/downloadBlob";
+import { generateCoverLetterPdfBlob } from "../../infrastructure/pdf/generateCoverLetterPdf";
 import { APP_FLOW_STEPS } from "../../shared/appFlowSteps";
 import { Card } from "../components/Card";
 import { PrimaryButton } from "../components/PrimaryButton";
@@ -52,6 +53,7 @@ export function ResultsPage({
 
   const [coverLetter, setCoverLetter] = useState<CoverLetter | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copyHint, setCopyHint] = useState<string | null>(null);
 
@@ -118,13 +120,27 @@ export function ResultsPage({
     }
   }
 
-  function handleDownload() {
+  async function handleDownloadPdf() {
     if (!coverLetter?.content || !job) {
       return;
     }
-    const company = slugForFilename(job.company || "company");
-    const role = slugForFilename(job.title || "cover-letter");
-    downloadTextFile(`cover-letter-${company}-${role}.txt`, coverLetter.content);
+    setPdfDownloading(true);
+    setError(null);
+    try {
+      const company = slugForFilename(job.company || "company");
+      const role = slugForFilename(job.title || "cover-letter");
+      const blob = await generateCoverLetterPdfBlob({
+        jobTitle: job.title || "Cover letter",
+        company: job.company || "Employer",
+        body: coverLetter.content,
+      });
+      downloadBlob(`cover-letter-${company}-${role}.pdf`, blob);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not build PDF.";
+      setError(message);
+    } finally {
+      setPdfDownloading(false);
+    }
   }
 
   if (!job || !resume) {
@@ -279,10 +295,10 @@ export function ResultsPage({
             <button
               type="button"
               className="link-button"
-              disabled={!coverLetter?.content}
-              onClick={handleDownload}
+              disabled={!coverLetter?.content || pdfDownloading}
+              onClick={() => void handleDownloadPdf()}
             >
-              Download .txt
+              {pdfDownloading ? "Building PDF…" : "Download PDF"}
             </button>
           </div>
         </div>

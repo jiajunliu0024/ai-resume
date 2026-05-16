@@ -11,7 +11,7 @@
 | **Scan job** | Open a job posting in a tab, then run the scan from the extension. | Reads text from the **active tab** (after your action), then uses AI to extract title, company, **key requirements**, and **keywords**. |
 | **Resume** | Upload a **PDF** résumé or work with a stored one. | Parses the PDF into structured sections (with AI or local fallback, depending on provider and settings). You can keep multiple résumés and pick one. |
 | **Tailor** | Edit sections and use **AI rewrite** where offered. | Compares your résumé to the scanned job, suggests alignment, and supports section-level editing and previews (including PDF-oriented flows where implemented). |
-| **Cover letter** | Choose which **keywords**, **requirements**, and **résumé excerpts** to include, then generate. | Builds a cover letter from your selections; you can **copy** or **download** text. |
+| **Cover letter** | Choose which **keywords**, **requirements**, and **résumé excerpts** to include, then generate. | Builds a cover letter from your selections; you can **copy** or **download a PDF**. |
 
 Your **API key** and parsed data are stored **locally** in the extension (Chrome `storage`). The extension does not send your résumé or letters to a separate app server defined in this repo.
 
@@ -29,6 +29,8 @@ Your **API key** and parsed data are stored **locally** in the extension (Chrome
 - **Google Chrome** (or another Chromium browser that supports Manifest V3 extensions).
 - **Node.js** (for building from source; use a version compatible with the toolchain listed in `package.json` / lockfile).
 - A valid **API key** for your chosen provider (host permissions in `public/manifest.json` include the provider API hosts used by the app).
+
+**Where to get keys / which tiers are often cheapest to try:** see **[`docs/AI_PROVIDER_API_KEYS.md`](docs/AI_PROVIDER_API_KEYS.md)** (signup links + free-/trial-oriented notes).
 
 ---
 
@@ -134,7 +136,7 @@ Section-level AI tools let you refine bullets and summaries while you stay in co
 
 ### 5. Generate your cover letter
 
-On **Cover letter**, tick the **keywords**, **requirements**, and **résumé snippets** you want included, run **Generate**, then **copy** or **download** the result.
+On **Cover letter**, tick the **keywords**, **requirements**, and **résumé snippets** you want included, run **Generate**, then **copy** or **Download PDF**.
 
 ![Cover letter — pick sources, generate, copy or download](public/store-promo/promo-05-results-1280x800.png)
 
