@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Resume Tailor",
   "description": "Tailor resumes and cover letters from the current job description.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; frame-src 'self' blob: data:; worker-src 'self'"
   },
