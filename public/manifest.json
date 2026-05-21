@@ -6,12 +6,39 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; frame-src 'self' blob: data:; worker-src 'self'"
   },
-  "action": {},
+  "icons": {
+    "16": "resume-tailor-r-icon-16.png",
+    "32": "resume-tailor-r-icon-32.png",
+    "48": "resume-tailor-r-icon-48.png",
+    "128": "resume-tailor-r-icon-128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "resume-tailor-r-icon-16.png",
+      "32": "resume-tailor-r-icon-32.png",
+      "48": "resume-tailor-r-icon-48.png",
+      "128": "resume-tailor-r-icon-128.png"
+    }
+  },
   "background": {
     "service_worker": "assets/background.js",
     "type": "module"
   },
   "permissions": ["activeTab", "storage", "scripting"],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.seek.com.au/*",
+        "*://*.seek.com/*",
+        "*://www.linkedin.com/*",
+        "*://*.indeed.com/*",
+        "*://*.glassdoor.com/*",
+        "*://*.jora.com/*"
+      ],
+      "js": ["assets/floatingWidget.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "host_permissions": [
     "https://api.openai.com/*",
     "https://api.deepseek.com/*",

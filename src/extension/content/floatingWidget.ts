@@ -4,11 +4,60 @@
  * Keep in sync with `src/shared/floatingWidgetMessages.ts`.
  */
 const RESUME_TAILOR_MINIMIZE_PANEL = "RESUME_TAILOR_MINIMIZE_PANEL" as const;
+const RESUME_TAILOR_GET_HOST_TAB_ID = "RESUME_TAILOR_GET_HOST_TAB_ID" as const;
+const RESUME_TAILOR_PANEL_OPEN_KEY = "resume-tailor.panel-open";
 
 const widgetRootId = "resume-tailor-floating-widget";
 
 let detachFloatingWidgetMessageListener: (() => void) | null = null;
 let detachRuntimeMessageListener: (() => void) | null = null;
+
+type WidgetController = {
+  openPanel: () => void;
+  closePanel: () => void;
+  togglePanel: () => void;
+};
+
+let widgetController: WidgetController | null = null;
+
+function persistPanelOpen(isOpen: boolean) {
+  try {
+    if (isOpen) {
+      sessionStorage.setItem(RESUME_TAILOR_PANEL_OPEN_KEY, "1");
+    } else {
+      sessionStorage.removeItem(RESUME_TAILOR_PANEL_OPEN_KEY);
+    }
+  } catch {
+    // sessionStorage may be unavailable on some restricted pages.
+  }
+}
+
+function wasPanelOpen(): boolean {
+  try {
+    return sessionStorage.getItem(RESUME_TAILOR_PANEL_OPEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function resolveHostTabId(): Promise<number | undefined> {
+  const w = window as Window & { __resumeTailorHostTabId?: unknown };
+  const injected = w.__resumeTailorHostTabId;
+  if (typeof injected === "number" && Number.isFinite(injected)) {
+    return Promise.resolve(injected);
+  }
+
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: RESUME_TAILOR_GET_HOST_TAB_ID }, (response) => {
+      if (chrome.runtime.lastError) {
+        resolve(undefined);
+        return;
+      }
+      const tabId = (response as { tabId?: number } | undefined)?.tabId;
+      resolve(typeof tabId === "number" && Number.isFinite(tabId) ? tabId : undefined);
+    });
+  });
+}
 
 function createStyles(): HTMLStyleElement {
   const style = document.createElement("style");
@@ -172,7 +221,34 @@ function createStyles(): HTMLStyleElement {
   return style;
 }
 
-function createWidget() {
+function registerRuntimeListeners(
+  togglePanel: () => void,
+  closePanel: (event?: Event) => void,
+) {
+  detachRuntimeMessageListener?.();
+  detachRuntimeMessageListener = null;
+
+  function onRuntimeMessage(message: unknown) {
+    if (!message || typeof message !== "object") {
+      return;
+    }
+    const m = message as { type?: string };
+    if (m.type === "RESUME_TAILOR_TOGGLE_WIDGET") {
+      togglePanel();
+      return;
+    }
+    if (m.type === RESUME_TAILOR_MINIMIZE_PANEL) {
+      closePanel();
+    }
+  }
+
+  chrome.runtime.onMessage.addListener(onRuntimeMessage);
+  detachRuntimeMessageListener = () => {
+    chrome.runtime.onMessage.removeListener(onRuntimeMessage);
+  };
+}
+
+function createWidget(): WidgetController {
   detachFloatingWidgetMessageListener?.();
   detachFloatingWidgetMessageListener = null;
   detachRuntimeMessageListener?.();
@@ -213,6 +289,7 @@ function createWidget() {
     launcher.hidden = true;
     panelCluster.style.removeProperty("display");
     launcher.style.removeProperty("display");
+    persistPanelOpen(true);
   }
 
   function closePanel(event?: Event) {
@@ -222,6 +299,15 @@ function createWidget() {
     launcher.hidden = false;
     panelCluster.style.setProperty("display", "none", "important");
     launcher.style.removeProperty("display");
+    persistPanelOpen(false);
+  }
+
+  function togglePanel() {
+    if (panelCluster.hidden) {
+      openPanel();
+    } else {
+      closePanel();
+    }
   }
 
   launcher.addEventListener("click", () => {
@@ -281,55 +367,39 @@ function createWidget() {
       window.removeEventListener("message", onWindowMessage, true);
     };
 
-    function onRuntimeMessage(message: unknown) {
-      if (!message || typeof message !== "object") {
-        return;
-      }
-      const m = message as { type?: string };
-      if (m.type === "RESUME_TAILOR_TOGGLE_WIDGET") {
-        if (panelCluster.hidden) {
-          openPanel();
-        } else {
-          closePanel();
-        }
-        return;
-      }
-      if (m.type === RESUME_TAILOR_MINIMIZE_PANEL) {
-        closePanel();
-      }
-    }
+    registerRuntimeListeners(togglePanel, closePanel);
 
-    chrome.runtime.onMessage.addListener(onRuntimeMessage);
-    detachRuntimeMessageListener = () => {
-      chrome.runtime.onMessage.removeListener(onRuntimeMessage);
-    };
+    if (wasPanelOpen()) {
+      openPanel();
+    }
   }
 
-  const appUrl = new URL(chrome.runtime.getURL("index.html"));
-  appUrl.searchParams.set("embed", "floating-widget");
+  void (async () => {
+    const appUrl = new URL(chrome.runtime.getURL("index.html"));
+    appUrl.searchParams.set("embed", "floating-widget");
 
-  /**
-   * `chrome.tabs.getCurrent()` is for extension pages (popup, etc.), not content scripts — it
-   * usually returns undefined here. The service worker injects the tab id immediately before this
-   * file runs (see `background.ts`).
-   */
-  const w = window as Window & { __resumeTailorHostTabId?: unknown };
-  const injected = w.__resumeTailorHostTabId;
-  if (typeof injected === "number" && Number.isFinite(injected)) {
-    appUrl.searchParams.set("hostTabId", String(injected));
-  } else if (chrome.tabs?.getCurrent) {
-    chrome.tabs.getCurrent((tab) => {
-      const id = tab?.id;
-      if (id !== undefined) {
-        appUrl.searchParams.set("hostTabId", String(id));
-      }
-      finishMount(appUrl.href);
-    });
+    const hostTabId = await resolveHostTabId();
+    if (hostTabId !== undefined) {
+      appUrl.searchParams.set("hostTabId", String(hostTabId));
+    }
+
+    finishMount(appUrl.href);
+  })();
+
+  return {
+    openPanel,
+    closePanel,
+    togglePanel,
+  };
+}
+
+function initFloatingWidget() {
+  if (widgetController || document.getElementById(widgetRootId)) {
     return;
   }
 
-  finishMount(appUrl.href);
+  widgetController = createWidget();
 }
 
-createWidget();
+initFloatingWidget();
 export {};

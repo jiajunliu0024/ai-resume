@@ -1,6 +1,7 @@
 import {
   type ExtractJobInsightsResult,
 } from "../../application/extractJobInsights";
+import { throwIfAiProviderResponseNotOk } from "./aiProviderHttpError";
 import {
   type ExtractedRequirement,
   type RequirementCategory,
@@ -226,13 +227,7 @@ ${rawText.slice(0, 14000)}`,
     }),
   });
 
-  // Surface provider errors to the Scan page so the user can fix key/quota issues.
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `${provider.displayName} request failed (${response.status}): ${errorText}`,
-    );
-  }
+  await throwIfAiProviderResponseNotOk(response, provider.displayName);
 
   // OpenAI-compatible chat/completions returns model text inside choices[0].message.content.
   const data = (await response.json()) as {

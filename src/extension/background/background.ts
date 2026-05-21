@@ -2,6 +2,7 @@
  * Must match `src/shared/floatingWidgetMessages.ts` (keep background a single rollup entry).
  */
 const RESUME_TAILOR_MINIMIZE_PANEL = "RESUME_TAILOR_MINIMIZE_PANEL";
+const RESUME_TAILOR_GET_HOST_TAB_ID = "RESUME_TAILOR_GET_HOST_TAB_ID";
 
 /**
  * `chrome.scripting.executeScript` throws (e.g. "Cannot access a chrome:// URL") on internal
@@ -37,7 +38,12 @@ function canInjectScriptIntoTab(tab: chrome.tabs.Tab): boolean {
  * The app iframe cannot always reach the injected widget via window.postMessage on some sites.
  * The iframe sends this to the service worker, which forwards to the tab's content script.
  */
-chrome.runtime.onMessage.addListener((message, sender) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === RESUME_TAILOR_GET_HOST_TAB_ID) {
+    sendResponse({ tabId: sender.tab?.id });
+    return true;
+  }
+
   if (message?.type !== RESUME_TAILOR_MINIMIZE_PANEL) {
     return;
   }

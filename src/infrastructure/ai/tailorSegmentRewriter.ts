@@ -1,4 +1,5 @@
 import type { RequirementCategory } from "../../domain/jobDescription";
+import { formatAiProviderErrorMessage } from "./aiProviderHttpError";
 import {
   getAiProviderChatCompletionConfig,
   type AiProviderId,
@@ -179,7 +180,11 @@ export async function rewriteTailorResumeSegment(input: {
   if (!response.ok) {
     return {
       ok: false,
-      message: `${provider.displayName} rewrite failed (${response.status}).`,
+      message: formatAiProviderErrorMessage(
+        response.status,
+        responseText,
+        provider.displayName,
+      ),
       requestJson,
       responseJson,
     };

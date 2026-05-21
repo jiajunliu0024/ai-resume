@@ -1,5 +1,6 @@
 import { type Resume } from "../domain/resume";
 import { type AiProviderId } from "../infrastructure/ai/openAiJobInsightsExtractor";
+import { isAiApiNotValidError } from "../infrastructure/ai/aiProviderHttpError";
 import {
   parseResumeWithAiProviderFromPdfPageImages,
   parseResumeWithAiProviderFromPlainText,
@@ -105,6 +106,9 @@ export async function parseResume(
 
       return buildResume(title, rawText, aiSections, "ai");
     } catch (error) {
+      if (isAiApiNotValidError(error)) {
+        throw error;
+      }
       console.warn("Resume vision parsing failed; trying plain-text AI or local fallback.", error);
     }
   }
@@ -123,6 +127,9 @@ export async function parseResume(
 
       return buildResume(title, rawText, aiSections, "ai");
     } catch (error) {
+      if (isAiApiNotValidError(error)) {
+        throw error;
+      }
       console.warn("Resume plain-text AI parsing failed; falling back locally.", error);
     }
   }

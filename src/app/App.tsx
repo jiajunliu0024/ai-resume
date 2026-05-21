@@ -25,6 +25,10 @@ type AppStep = "scan" | "resume" | "tailor" | "results";
 
 const steps: AppStep[] = ["scan", "resume", "tailor", "results"];
 
+function isAppStep(value: unknown): value is AppStep {
+  return typeof value === "string" && (steps as string[]).includes(value);
+}
+
 export function App() {
   const stepPanelRef = useRef<HTMLDivElement>(null);
   const embeddedInFloatingWidget =
@@ -50,6 +54,8 @@ export function App() {
   // isScanning disables the scan button and shows a loading label.
   const [isScanning, setIsScanning] = useState(false);
   const currentStepIndex = steps.indexOf(currentStep);
+  /** Where Cover letter back navigation should return after skipping steps. */
+  const [resultsBackStep, setResultsBackStep] = useState<"scan" | "resume" | "tailor">("tailor");
   const visibleResumes = resumes.length
     ? resumes
     : currentResume
@@ -62,7 +68,7 @@ export function App() {
     } else if (currentStep === "tailor") {
       setCurrentStep("resume");
     } else if (currentStep === "results") {
-      setCurrentStep("tailor");
+      setCurrentStep(resultsBackStep);
     }
   }
 
@@ -114,7 +120,27 @@ export function App() {
           setResumes(storedResumes);
         }
       });
+
+    void chromeStorageRepository
+      .getItem<ScanJobPageResult>(storageKeys.currentJobDescription)
+      .then((storedJob) => {
+        if (storedJob) {
+          setScannedJob(storedJob);
+        }
+      });
+
+    void chromeStorageRepository
+      .getItem<AppStep>(storageKeys.currentStep)
+      .then((storedStep) => {
+        if (isAppStep(storedStep)) {
+          setCurrentStep(storedStep);
+        }
+      });
   }, []);
+
+  useEffect(() => {
+    void chromeStorageRepository.setItem(storageKeys.currentStep, currentStep);
+  }, [currentStep]);
 
   // Keep the API key in UI state and persist it locally.
   // We intentionally do not send this key to any custom backend.
@@ -211,6 +237,7 @@ export function App() {
       storageKeys.currentResume,
       storageKeys.resumes,
       storageKeys.currentResults,
+      storageKeys.currentStep,
     ];
 
     await Promise.all(
@@ -324,7 +351,11 @@ export function App() {
                   error={scanError}
                   isScanning={isScanning}
                   scannedJob={scannedJob}
-                  onNext={() => setCurrentStep("resume")}
+                  onGoToResume={() => setCurrentStep("resume")}
+                  onGoToCoverLetter={() => {
+                    setResultsBackStep("scan");
+                    setCurrentStep("results");
+                  }}
                   onOpenSettings={() => setSettingsOpen(true)}
                   onScan={handleScanCurrentPage}
                 />
@@ -335,12 +366,18 @@ export function App() {
                   jobTitle={scannedJob?.title}
                   resumes={visibleResumes}
                   resume={currentResume}
-                  onBack={() => setCurrentStep("scan")}
                   onResumesAdd={handleResumesAdd}
                   onResumeDelete={handleResumeDelete}
                   onResumeSelect={handleResumeSelect}
                   onOpenSettings={() => setSettingsOpen(true)}
-                  onNext={() => setCurrentStep("tailor")}
+                  onGoToTailor={() => {
+                    setResultsBackStep("tailor");
+                    setCurrentStep("tailor");
+                  }}
+                  onGoToCoverLetter={() => {
+                    setResultsBackStep("resume");
+                    setCurrentStep("results");
+                  }}
                 />
               ) : currentStep === "tailor" ? (
                 <TailorPage
@@ -351,7 +388,10 @@ export function App() {
                   onBack={() => setCurrentStep("resume")}
                   onOpenSettings={() => setSettingsOpen(true)}
                   onResumeChange={handleResumeChange}
-                  onNext={() => setCurrentStep("results")}
+                  onNext={() => {
+                    setResultsBackStep("tailor");
+                    setCurrentStep("results");
+                  }}
                 />
               ) : (
                 <ResultsPage
@@ -359,7 +399,7 @@ export function App() {
                   resume={currentResume}
                   apiKey={apiKey}
                   aiProvider={aiProvider}
-                  onBack={() => setCurrentStep("tailor")}
+                  onBack={() => setCurrentStep(resultsBackStep)}
                   onGoToScan={() => setCurrentStep("scan")}
                   onOpenSettings={() => setSettingsOpen(true)}
                 />

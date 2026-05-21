@@ -9,6 +9,7 @@ import {
   getAiProviderChatCompletionConfig,
   type AiProviderId,
 } from "./openAiJobInsightsExtractor";
+import { throwIfAiProviderResponseNotOk } from "./aiProviderHttpError";
 
 export type AiParsedResume = {
   basicInfoFields: ResumeBasicInfo;
@@ -330,12 +331,7 @@ export async function parseResumeWithAiProviderFromPdfPageImages(
     }),
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `${provider.displayName} resume parse failed (${response.status}): ${errorText}`,
-    );
-  }
+  await throwIfAiProviderResponseNotOk(response, provider.displayName);
 
   const data = (await response.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
@@ -400,12 +396,7 @@ ${clipped}`;
     }),
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `${provider.displayName} resume parse failed (${response.status}): ${errorText}`,
-    );
-  }
+  await throwIfAiProviderResponseNotOk(response, provider.displayName);
 
   const data = (await response.json()) as {
     choices?: Array<{ message?: { content?: string } }>;

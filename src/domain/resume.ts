@@ -53,11 +53,3 @@ export type Resume = {
   createdAt: string;
   updatedAt: string;
 };
-
-export type ResumeRewriteSuggestion = {
-  id: string;
-  originalText: string;
-  suggestedText: string;
-  reason: string;
-  matchedRequirementIds: string[];
-};

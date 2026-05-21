@@ -2,6 +2,7 @@ import {
   getAiProviderChatCompletionConfig,
   type AiProviderId,
 } from "./openAiJobInsightsExtractor";
+import { throwIfAiProviderResponseNotOk } from "./aiProviderHttpError";
 
 export type CoverLetterPromptChunk = {
   heading: string;
@@ -105,10 +106,7 @@ Rules:
     }),
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`${provider.displayName} request failed (${response.status}): ${errorText}`);
-  }
+  await throwIfAiProviderResponseNotOk(response, provider.displayName);
 
   const data = (await response.json()) as {
     choices?: Array<{ message?: { content?: string } }>;

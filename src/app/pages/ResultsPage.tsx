@@ -152,7 +152,8 @@ export function ResultsPage({
         </header>
         <Card>
           <p className="muted">
-            Scan a job and select a resume first, then return here from the Tailor step.
+            Scan a job and add or select a resume first. You can open Cover letter from Scan,
+            Resume, or Tailor.
           </p>
         </Card>
         <div className="footer-actions two-columns">

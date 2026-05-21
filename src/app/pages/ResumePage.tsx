@@ -19,12 +19,12 @@ type ResumePageProps = {
   jobTitle?: string;
   resumes: Resume[];
   resume: Resume | null;
-  onBack: () => void;
   onResumesAdd: (resumes: Resume[]) => void;
   onResumeDelete: (resumeId: string) => void;
   onResumeSelect: (resumeId: string) => void;
   onOpenSettings: () => void;
-  onNext: () => void;
+  onGoToTailor: () => void;
+  onGoToCoverLetter: () => void;
 };
 
 export function ResumePage({
@@ -33,12 +33,12 @@ export function ResumePage({
   jobTitle,
   resumes,
   resume,
-  onBack,
   onResumesAdd,
   onResumeDelete,
   onResumeSelect,
   onOpenSettings,
-  onNext,
+  onGoToTailor,
+  onGoToCoverLetter,
 }: ResumePageProps) {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isParsingPdf, setIsParsingPdf] = useState(false);
@@ -219,8 +219,8 @@ export function ResumePage({
           <span className="fit">{resume?.rawText.trim() ? "Ready" : "Waiting"}</span>
         </div>
         <p>
-          Tailor will compare this resume against the scanned job requirements,
-          then show editable AI rewrite sections.
+          Tailor aligns your resume to the job, or skip straight to cover letter
+          generation if you only need a letter.
         </p>
         {resume?.parseSource && (
           <p className="helper-text">
@@ -231,15 +231,20 @@ export function ResumePage({
       </Card>
 
       <div className="footer-actions two-columns">
-        <PrimaryButton type="button" variant="secondary" onClick={onBack}>
-          Back
-        </PrimaryButton>
         <PrimaryButton
           type="button"
           disabled={isParsingPdf || !resume?.rawText.trim() || !hasApiKey}
-          onClick={onNext}
+          onClick={onGoToTailor}
         >
           {isParsingPdf ? "Parsing..." : !hasApiKey ? "Add API Key to Continue" : "Tailor Resume"}
+        </PrimaryButton>
+        <PrimaryButton
+          type="button"
+          variant="secondary"
+          disabled={isParsingPdf || !resume?.rawText.trim() || !hasApiKey}
+          onClick={onGoToCoverLetter}
+        >
+          {isParsingPdf ? "Parsing..." : !hasApiKey ? "Add API Key" : "Cover letter >"}
         </PrimaryButton>
       </div>
     </main>

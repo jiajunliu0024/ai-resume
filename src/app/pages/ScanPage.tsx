@@ -12,7 +12,8 @@ type ScanPageProps = {
   error: string | null;
   isScanning: boolean;
   scannedJob: ScanJobPageResult | null;
-  onNext: () => void;
+  onGoToResume: () => void;
+  onGoToCoverLetter: () => void;
   onOpenSettings: () => void;
   onScan: () => void;
 };
@@ -22,7 +23,8 @@ export function ScanPage({
   error,
   isScanning,
   scannedJob,
-  onNext,
+  onGoToResume,
+  onGoToCoverLetter,
   onOpenSettings,
   onScan,
 }: ScanPageProps) {
@@ -158,9 +160,17 @@ export function ScanPage({
         )}
       </Card>
 
-      <div className="footer-actions sticky-footer-actions">
-        <PrimaryButton type="button" disabled={!scannedJob} onClick={onNext}>
-          Next: Resume
+      <div className="footer-actions sticky-footer-actions two-columns">
+        <PrimaryButton type="button" disabled={!scannedJob} onClick={onGoToResume}>
+          Add resume
+        </PrimaryButton>
+        <PrimaryButton
+          type="button"
+          variant="secondary"
+          disabled={!scannedJob}
+          onClick={onGoToCoverLetter}
+        >
+          Generate cover letter
         </PrimaryButton>
       </div>
 

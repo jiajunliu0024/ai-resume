@@ -5,4 +5,5 @@ export const storageKeys = {
   currentResume: "resume-tailor.current-resume",
   resumes: "resume-tailor.resumes",
   currentResults: "resume-tailor.current-results",
+  currentStep: "resume-tailor.current-step",
 } as const;
