@@ -1,8 +1,11 @@
+import { extractActiveTabPageText } from "../scan/extractActiveTabPageText";
+
 /**
  * Must match `src/shared/floatingWidgetMessages.ts` (keep background a single rollup entry).
  */
 const RESUME_TAILOR_MINIMIZE_PANEL = "RESUME_TAILOR_MINIMIZE_PANEL";
 const RESUME_TAILOR_GET_HOST_TAB_ID = "RESUME_TAILOR_GET_HOST_TAB_ID";
+const RESUME_TAILOR_READ_ACTIVE_TAB_TEXT = "RESUME_TAILOR_READ_ACTIVE_TAB_TEXT";
 
 /**
  * `chrome.scripting.executeScript` throws (e.g. "Cannot access a chrome:// URL") on internal
@@ -41,6 +44,25 @@ function canInjectScriptIntoTab(tab: chrome.tabs.Tab): boolean {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === RESUME_TAILOR_GET_HOST_TAB_ID) {
     sendResponse({ tabId: sender.tab?.id });
+    return true;
+  }
+
+  if (message?.type === RESUME_TAILOR_READ_ACTIVE_TAB_TEXT) {
+    const tabId =
+      typeof message.tabId === "number" && Number.isFinite(message.tabId) ?
+        message.tabId
+      : undefined;
+
+    void extractActiveTabPageText({ tabId })
+      .then((data) => {
+        sendResponse({ ok: true as const, data });
+      })
+      .catch((error: unknown) => {
+        const errMessage =
+          error instanceof Error ? error.message : "Could not read the active tab.";
+        sendResponse({ ok: false as const, error: errMessage });
+      });
+
     return true;
   }
 
@@ -98,4 +120,3 @@ chrome.action.onClicked.addListener(async (tab) => {
     }
   }
 });
-export {};

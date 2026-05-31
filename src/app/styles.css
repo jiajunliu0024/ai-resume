@@ -1868,9 +1868,237 @@ h2 {
   animation: spin 0.8s linear infinite;
 }
 
+/* Shared async wait UI (scan, cover letter, buttons) */
+.loading-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 2px solid rgb(255 255 255 / 45%);
+  border-top-color: #ffffff;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-spinner--sm {
+  width: 14px;
+  height: 14px;
+}
+
+.loading-spinner--md {
+  width: 20px;
+  height: 20px;
+}
+
+.loading-spinner--lg {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+.loading-spinner--on-light {
+  border-color: #e8ecf4;
+  border-top-color: #073391;
+}
+
+.button--loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: wait;
+}
+
+.button--loading .button-label {
+  opacity: 0.95;
+}
+
+.loading-overlay-host {
+  position: relative;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  border-radius: inherit;
+  background: rgb(255 255 255 / 88%);
+  backdrop-filter: blur(3px);
+  animation: loading-overlay-in 0.22s ease-out;
+}
+
+.loading-overlay-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #073391;
+  text-align: center;
+}
+
+.loading-overlay-detail {
+  margin: 0;
+  max-width: 28rem;
+  font-size: 12px;
+  font-weight: 600;
+  color: #667085;
+  text-align: center;
+  line-height: 1.45;
+}
+
+.loading-overlay-host.is-waiting > :not(.loading-overlay) {
+  pointer-events: none;
+  user-select: none;
+}
+
+.loading-overlay-host.is-waiting > :not(.loading-overlay) {
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+.large-icon--pulse {
+  display: grid;
+  place-items: center;
+  min-height: 2.5rem;
+}
+
+.scan-progress-card {
+  border: 1px solid #c5d7f5;
+  background: linear-gradient(135deg, #f7faff 0%, #eef4ff 100%);
+  animation: loading-overlay-in 0.22s ease-out;
+}
+
+.scan-progress-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 4px;
+  text-align: center;
+}
+
+.loading-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+  text-align: left;
+}
+
+.loading-steps-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #98a2b3;
+  transition: color 0.2s ease;
+}
+
+.loading-steps-item--active {
+  color: #073391;
+}
+
+.loading-steps-item--done {
+  color: #475467;
+}
+
+.loading-steps-marker {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  background: #e8ecf4;
+  color: #667085;
+}
+
+.loading-steps-item--active .loading-steps-marker {
+  background: #073391;
+  color: #ffffff;
+  animation: loading-pulse 1.2s ease-in-out infinite;
+}
+
+.loading-steps-item--done .loading-steps-marker {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.scan-skeleton {
+  display: grid;
+  gap: 12px;
+  animation: loading-pulse 1.4s ease-in-out infinite;
+}
+
+.scan-skeleton-line {
+  height: 14px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #e8ecf4 0%, #f4f7fc 45%, #e8ecf4 90%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.scan-skeleton-line--title {
+  height: 22px;
+  width: 72%;
+}
+
+.scan-skeleton-line--short {
+  width: 48%;
+}
+
+.cover-letter-preview-host {
+  position: relative;
+  min-height: 120px;
+}
+
+.cover-letter-preview-host .cover-letter-preview {
+  min-height: 120px;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-overlay-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes loading-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.65;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
   }
 }
 

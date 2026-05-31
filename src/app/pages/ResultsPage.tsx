@@ -10,6 +10,7 @@ import { downloadBlob } from "../../infrastructure/export/downloadBlob";
 import { generateCoverLetterPdfBlob } from "../../infrastructure/pdf/generateCoverLetterPdf";
 import { APP_FLOW_STEPS } from "../../shared/appFlowSteps";
 import { Card } from "../components/Card";
+import { LoadingOverlay } from "../components/LoadingOverlay";
 import { PrimaryButton } from "../components/PrimaryButton";
 
 type ResultsPageProps = {
@@ -268,7 +269,8 @@ export function ResultsPage({
         <div className="cover-letter-generate-row">
           <PrimaryButton
             type="button"
-            disabled={!canGenerate || generating}
+            loading={generating}
+            disabled={!canGenerate}
             onClick={() => void handleGenerate()}
           >
             {generating ? "Generating…" : "Generate cover letter"}
@@ -304,13 +306,28 @@ export function ResultsPage({
           </div>
         </div>
         {copyHint ? <p className="helper-text">{copyHint}</p> : null}
-        <div className="cover-letter-preview">
-          {coverLetter?.content ? (
-            coverLetter.content
-          ) : (
-            <span className="muted">Generated letter will appear here.</span>
-          )}
-        </div>
+        <LoadingOverlay
+          active={generating}
+          label="Writing your cover letter…"
+          detail="Calling your AI provider. This may take 10–30 seconds."
+        >
+          <div className="cover-letter-preview-host">
+            <div className="cover-letter-preview">
+              {coverLetter?.content ? (
+                coverLetter.content
+              ) : generating ? (
+                <div className="scan-skeleton" aria-hidden="true">
+                  <div className="scan-skeleton-line scan-skeleton-line--title" />
+                  <div className="scan-skeleton-line" />
+                  <div className="scan-skeleton-line" />
+                  <div className="scan-skeleton-line scan-skeleton-line--short" />
+                </div>
+              ) : (
+                <span className="muted">Generated letter will appear here.</span>
+              )}
+            </div>
+          </div>
+        </LoadingOverlay>
       </Card>
 
       <div className="footer-actions two-columns">

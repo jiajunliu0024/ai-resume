@@ -1,6 +1,6 @@
 # Sequence Diagrams
 
-Step-by-step call order for main flows. Companion to [ARCHITECTURE.md](./ARCHITECTURE.md) (layers and dependencies).
+Step-by-step call order for main flows. Companion to [ARCHITECTURE.md](./ARCHITECTURE.md) (layers and dependencies). Scan permissions: [JOB_PAGE_SCAN.md](./JOB_PAGE_SCAN.md).
 
 **Legend:** Solid calls stay in the extension; dashed arrows are **HTTPS to the user’s AI provider** (API key from local storage, no custom backend).
 
@@ -60,8 +60,8 @@ sequenceDiagram
   participant App as app/App.tsx
   participant UC as application/scanCurrentTab
   participant Tab as extension/readActiveTabText
-  participant Chrome as Chrome APIs
-  participant Page as Job board tab (injected fn)
+  participant BG as background
+  participant Page as Job board DOM
   participant Job as application/scanJobPage
   participant Heur as application/extractJobInsights
   participant AI as infrastructure/openAiJobInsightsExtractor
@@ -76,15 +76,15 @@ sequenceDiagram
   else Has API key
     App->>App: setIsScanning(true)
 
-    App->>UC: scanCurrentTab(readActiveTabText)
-    UC->>Tab: readActiveTabText()
-    Tab->>Chrome: tabs.query(active)
-    Chrome-->>Tab: tabId
-    Tab->>Chrome: scripting.executeScript(extractTextFromCurrentDocument)
-    Chrome->>Page: Run DOM scorer in page
-    Page-->>Chrome: title, url, text, debugLog
-    Chrome-->>Tab: ActiveTabText
+    App->>UC: scanCurrentTab(() => readActiveTabText({ tabId }))
+    UC->>Tab: readActiveTabText → runtime.sendMessage
+    Tab->>BG: RESUME_TAILOR_READ_ACTIVE_TAB_TEXT
+    BG->>Page: executeScript(extractTextFromCurrentDocument)
+    Page-->>BG: title, url, text, debugLog
+    BG-->>Tab: { ok, data }
     Tab-->>UC: page snapshot
+
+  Note over Tab,BG: See JOB_PAGE_SCAN.md — one-shot executeScript from the service worker; no scan content script.
 
     UC->>Job: scanJobPage({ pageTitle, pageText, sourceUrl, debugLog })
     Job->>Heur: extractJobInsights(pageText)

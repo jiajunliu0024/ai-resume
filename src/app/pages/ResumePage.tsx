@@ -233,18 +233,20 @@ export function ResumePage({
       <div className="footer-actions two-columns">
         <PrimaryButton
           type="button"
-          disabled={isParsingPdf || !resume?.rawText.trim() || !hasApiKey}
+          loading={isParsingPdf}
+          disabled={!resume?.rawText.trim() || !hasApiKey}
           onClick={onGoToTailor}
         >
-          {isParsingPdf ? "Parsing..." : !hasApiKey ? "Add API Key to Continue" : "Tailor Resume"}
+          {isParsingPdf ? "Parsing…" : !hasApiKey ? "Add API Key to Continue" : "Tailor Resume"}
         </PrimaryButton>
         <PrimaryButton
           type="button"
           variant="secondary"
-          disabled={isParsingPdf || !resume?.rawText.trim() || !hasApiKey}
+          loading={isParsingPdf}
+          disabled={!resume?.rawText.trim() || !hasApiKey}
           onClick={onGoToCoverLetter}
         >
-          {isParsingPdf ? "Parsing..." : !hasApiKey ? "Add API Key" : "Cover letter >"}
+          {isParsingPdf ? "Parsing…" : !hasApiKey ? "Add API Key" : "Cover letter >"}
         </PrimaryButton>
       </div>
     </main>

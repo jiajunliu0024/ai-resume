@@ -128,7 +128,11 @@
       not by this document alone. You should review the provider’s policy before entering a key or
       sending sensitive information.
     </p>
-    <p>The extension’s manifest declares network access only to the provider API hosts required for those calls.</p>
+    <p>
+      The extension’s manifest also declares access to <strong>HTTP and HTTPS websites</strong> so it can read job
+      posting text when you scan a page. That access is used for local extraction in your browser, not to send the
+      full page to the extension author. AI network calls go to the provider hosts declared in the manifest.
+    </p>
 
     <h2>5. Permissions and why they are used</h2>
     <ul>
@@ -145,8 +149,13 @@
         UI on web pages (for example a floating panel), in line with Chrome’s security model.
       </li>
       <li>
-        <strong>Host permissions for AI APIs</strong> — To contact the AI provider endpoints you
-        choose when generating or parsing content.
+        <strong>Host permissions (<code>http://*/*</code>, <code>https://*/*</code>)</strong> — To read job
+        posting content from tabs you use when you scan, including career sites not named individually in the
+        manifest.
+      </li>
+      <li>
+        <strong>Host permissions for AI APIs</strong> — To contact the AI provider endpoints you choose when
+        generating or parsing content.
       </li>
     </ul>
 

@@ -23,10 +23,11 @@ When you use AI features, the extension sends necessary content from your browse
 
 ## 4. Permissions
 
-- **activeTab** — Access tab content when you take an explicit action (e.g. job scan).
+- **activeTab** — Temporary access when you invoke the extension from the toolbar (e.g. open the floating panel).
 - **storage** — Persist settings and your work locally.
-- **scripting** — Inject or coordinate extension scripts where required (e.g. floating UI).
-- **Host permissions** for declared AI API hosts — Network calls only to those endpoints for AI features.
+- **scripting** — Inject or coordinate extension scripts where required (e.g. job-page scan bridge, floating UI).
+- **Host permissions (`http://*/*`, `https://*/*`)** — Read job posting text from pages you open when you run a scan, and inject the scan helper on sites that are not pre-listed in the manifest. Data is processed locally in the extension; scan does not upload the page to the author’s servers.
+- **Host permissions (declared AI API hosts)** — Send only the content needed for AI features to the provider you choose, using your API key.
 
 ## 5. Children
 

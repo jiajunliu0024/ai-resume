@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { type ScanJobPageResult } from "../../application/scanJobPage";
 import { type ExtractedRequirement } from "../../domain/jobDescription";
 import { APP_FLOW_STEPS } from "../../shared/appFlowSteps";
 import { Card } from "../components/Card";
+import { LoadingOverlay } from "../components/LoadingOverlay";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { LoadingSteps, type LoadingStepItem } from "../components/LoadingSteps";
 import { PrimaryButton } from "../components/PrimaryButton";
 
-// ScanPage is intentionally a presentational component.
-// It receives state and callbacks from App instead of calling Chrome or OpenAI directly.
+export type ScanPhase = "reading-page" | "extracting-ai" | null;
+
 type ScanPageProps = {
   apiKeyConfigured: boolean;
   error: string | null;
   isScanning: boolean;
+  scanPhase: ScanPhase;
   scannedJob: ScanJobPageResult | null;
   onGoToResume: () => void;
   onGoToCoverLetter: () => void;
@@ -22,6 +26,7 @@ export function ScanPage({
   apiKeyConfigured,
   error,
   isScanning,
+  scanPhase,
   scannedJob,
   onGoToResume,
   onGoToCoverLetter,
@@ -30,6 +35,34 @@ export function ScanPage({
 }: ScanPageProps) {
   const [selectedInsight, setSelectedInsight] =
     useState<ExtractedRequirement | null>(null);
+
+  const loadingSteps = useMemo((): LoadingStepItem[] => {
+    const readingState =
+      scanPhase === "reading-page"
+        ? "active"
+        : scanPhase === "extracting-ai"
+          ? "done"
+          : "pending";
+    const aiState =
+      scanPhase === "extracting-ai"
+        ? "active"
+        : "pending";
+
+    return [
+      { id: "read", label: "Reading job page from this tab", state: readingState },
+      { id: "ai", label: "Extracting title, requirements, and keywords", state: aiState },
+    ];
+  }, [scanPhase]);
+
+  const overlayLabel =
+    scanPhase === "extracting-ai"
+      ? "Analyzing with AI…"
+      : "Reading job page…";
+
+  const overlayDetail =
+    scanPhase === "extracting-ai"
+      ? "This usually takes a few seconds. Your API key calls the provider directly."
+      : "Scanning the active tab. Stay on the job posting.";
 
   function findInsightContext(insight: ExtractedRequirement): string {
     if (!scannedJob) {
@@ -76,15 +109,30 @@ export function ScanPage({
 
       <Card tone="soft">
         <div className="center stack">
-          <div className="large-icon">⌕</div>
+          <div className={`large-icon${isScanning ? " large-icon--pulse" : ""}`} aria-hidden="true">
+            {isScanning ? <LoadingSpinner size="lg" onLight /> : "⌕"}
+          </div>
           <p className="muted">
-            When you are ready, capture text from the active tab and run structured extraction.
+            {isScanning
+              ? "Working on your scan — please keep this job tab open."
+              : "When you are ready, capture text from the active tab and run structured extraction."}
           </p>
-          <PrimaryButton type="button" disabled={isScanning} onClick={onScan}>
-            {isScanning ? "Scanning..." : "Scan Current Page"}
+          <PrimaryButton type="button" loading={isScanning} onClick={onScan}>
+            {isScanning ? "Scanning…" : "Scan Current Page"}
           </PrimaryButton>
         </div>
       </Card>
+
+      {isScanning ? (
+        <Card tone="soft" className="scan-progress-card">
+          <div className="scan-progress-card-inner">
+            <LoadingSpinner size="md" onLight />
+            <p className="loading-overlay-label">{overlayLabel}</p>
+            <p className="loading-overlay-detail">{overlayDetail}</p>
+            <LoadingSteps steps={loadingSteps} />
+          </div>
+        </Card>
+      ) : null}
 
       {error && (
         <div className="error-box" role="alert">
@@ -92,82 +140,92 @@ export function ScanPage({
         </div>
       )}
 
-      <Card>
-        <div className="section-header">
-          <span className="eyebrow">Extracted Job</span>
-          {/* Edit is a placeholder for a later manual correction flow. */}
-          <button className="link-button" type="button">
-            Edit
-          </button>
-        </div>
-        <h2>{scannedJob?.title || "Job title will appear here"}</h2>
-        {scannedJob ? (
-          <div className="stack">
-            <p className="company-name">{scannedJob.company}</p>
-            <p className="muted">{scannedJob.sourceUrl}</p>
-            <div className="insight-block">
-              <span className="eyebrow">Key Requirements</span>
-              {/* These requirements come from OpenAI after scan succeeds. */}
-              {scannedJob.requirements.length > 0 ? (
-                <ul className="insight-list">
-                  {scannedJob.requirements.map((requirement) => (
-                    <li key={requirement.id}>
-                      <span className="insight-list-bullet" aria-hidden="true">
-                        •
-                      </span>
-                      <button
-                        className="insight-button"
-                        type="button"
-                        onClick={() => setSelectedInsight(requirement)}
-                      >
-                        {requirement.text}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="muted">No requirements extracted yet.</p>
-              )}
-            </div>
-
-            <div className="insight-block">
-              <span className="eyebrow">Keywords</span>
-              {/* Keywords are shown as chips because later pages will use them for resume tailoring. */}
-              {scannedJob.keywords.length > 0 ? (
-                <div className="chip-list">
-                  {scannedJob.keywords.map((keyword) => (
-                    <button
-                      className="chip chip-button"
-                      key={keyword.id}
-                      type="button"
-                      onClick={() => setSelectedInsight(keyword)}
-                    >
-                      {keyword.text}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="muted">No keywords extracted yet.</p>
-              )}
-            </div>
-
+      <LoadingOverlay active={isScanning} label={overlayLabel} detail={overlayDetail}>
+        <Card>
+          <div className="section-header">
+            <span className="eyebrow">Extracted Job</span>
+            <button className="link-button" type="button" disabled={isScanning}>
+              Edit
+            </button>
           </div>
-        ) : (
-          <p className="muted">
-            Run <strong>Scan Current Page</strong> to read the active tab and extract requirements and
-            keywords with AI (requires an API key).
-          </p>
-        )}
-      </Card>
+
+          {isScanning && !scannedJob ? (
+            <div className="scan-skeleton" aria-hidden="true">
+              <div className="scan-skeleton-line scan-skeleton-line--title" />
+              <div className="scan-skeleton-line scan-skeleton-line--short" />
+              <div className="scan-skeleton-line" />
+              <div className="scan-skeleton-line" />
+            </div>
+          ) : null}
+
+          <h2>{scannedJob?.title || "Job title will appear here"}</h2>
+          {scannedJob ? (
+            <div className="stack">
+              <p className="company-name">{scannedJob.company}</p>
+              <p className="muted">{scannedJob.sourceUrl}</p>
+              <div className="insight-block">
+                <span className="eyebrow">Key Requirements</span>
+                {scannedJob.requirements.length > 0 ? (
+                  <ul className="insight-list">
+                    {scannedJob.requirements.map((requirement) => (
+                      <li key={requirement.id}>
+                        <span className="insight-list-bullet" aria-hidden="true">
+                          •
+                        </span>
+                        <button
+                          className="insight-button"
+                          type="button"
+                          onClick={() => setSelectedInsight(requirement)}
+                        >
+                          {requirement.text}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="muted">No requirements extracted yet.</p>
+                )}
+              </div>
+
+              <div className="insight-block">
+                <span className="eyebrow">Keywords</span>
+                {scannedJob.keywords.length > 0 ? (
+                  <div className="chip-list">
+                    {scannedJob.keywords.map((keyword) => (
+                      <button
+                        className="chip chip-button"
+                        key={keyword.id}
+                        type="button"
+                        onClick={() => setSelectedInsight(keyword)}
+                      >
+                        {keyword.text}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="muted">No keywords extracted yet.</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            !isScanning && (
+              <p className="muted">
+                Run <strong>Scan Current Page</strong> to read the active tab and extract
+                requirements and keywords with AI (requires an API key).
+              </p>
+            )
+          )}
+        </Card>
+      </LoadingOverlay>
 
       <div className="footer-actions sticky-footer-actions two-columns">
-        <PrimaryButton type="button" disabled={!scannedJob} onClick={onGoToResume}>
+        <PrimaryButton type="button" disabled={!scannedJob || isScanning} onClick={onGoToResume}>
           Add resume
         </PrimaryButton>
         <PrimaryButton
           type="button"
           variant="secondary"
-          disabled={!scannedJob}
+          disabled={!scannedJob || isScanning}
           onClick={onGoToCoverLetter}
         >
           Generate cover letter

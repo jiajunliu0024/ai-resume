@@ -4,6 +4,8 @@ Generated from `src/**/*.ts(x)` import analysis. Update when you add layers or c
 
 **Sequence diagrams (per flow):** [SEQUENCE_DIAGRAMS.md](./SEQUENCE_DIAGRAMS.md)
 
+**Job page scan (permissions, content script bridge):** [JOB_PAGE_SCAN.md](./JOB_PAGE_SCAN.md)
+
 ## 1. Layered architecture (intended)
 
 ```mermaid
@@ -137,6 +139,8 @@ flowchart TB
 ```
 
 **How to read:** solid = normal; dashed = exception. `extension` has no arrow to other layers (by design).
+
+**Job tab access:** manifest `host_permissions` include `http://*/*` and `https://*/*` for scan on any job site ([JOB_PAGE_SCAN.md](./JOB_PAGE_SCAN.md)).
 
 ---
 

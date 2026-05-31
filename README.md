@@ -28,7 +28,7 @@ Your **API key** and parsed data are stored **locally** in the extension (Chrome
 
 - **Google Chrome** (or another Chromium browser that supports Manifest V3 extensions).
 - **Node.js** (for building from source; use a version compatible with the toolchain listed in `package.json` / lockfile).
-- A valid **API key** for your chosen provider (host permissions in `public/manifest.json` include the provider API hosts used by the app).
+- A valid **API key** for your chosen provider (`public/manifest.json` declares `http://*/*`, `https://*/*` for job-page scan plus explicit AI API hosts).
 
 **Where to get keys / which tiers are often cheapest to try:** see **[`docs/AI_PROVIDER_API_KEYS.md`](docs/AI_PROVIDER_API_KEYS.md)** (signup links + free-/trial-oriented notes). Runtime API smoke tests stay local (inspect the extension popup in DevTools → **Network** during Scan / Résumé / Cover letter — do not commit key-bearing notes to the repo).
 
@@ -133,3 +133,5 @@ Steps are ordered to match the in-app progress bar (**Scan job → Resume → Ta
 | `public/manifest.json` | Extension manifest (copied into `dist` by the build). |
 
 For product rules, privacy expectations, and architecture boundaries, see **[`AGENTS.md`](AGENTS.md)**.
+
+**Docs:** [Architecture & dependencies](docs/ARCHITECTURE.md) · [Sequence diagrams](docs/SEQUENCE_DIAGRAMS.md) · [Job page scan / permissions](docs/JOB_PAGE_SCAN.md) (if Scan fails with “Cannot access contents of the page”, start here).

@@ -31,9 +31,20 @@ function isAppStep(value: unknown): value is AppStep {
 
 export function App() {
   const stepPanelRef = useRef<HTMLDivElement>(null);
+  const embedSearchParams =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : null;
   const embeddedInFloatingWidget =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("embed") === "floating-widget";
+    embedSearchParams?.get("embed") === "floating-widget";
+  const hostTabIdFromEmbed = (() => {
+    const raw = embedSearchParams?.get("hostTabId");
+    if (!raw) {
+      return undefined;
+    }
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  })();
 
   // currentStep controls which page is visible in the three-step flow.
   const [currentStep, setCurrentStep] = useState<AppStep>("scan");
@@ -51,8 +62,11 @@ export function App() {
   const [currentResume, setCurrentResume] = useState<Resume | null>(null);
   // scanError is shown in the Scan page when Chrome scanning or OpenAI fails.
   const [scanError, setScanError] = useState<string | null>(null);
-  // isScanning disables the scan button and shows a loading label.
+  // isScanning disables the scan button and shows loading UI on ScanPage.
   const [isScanning, setIsScanning] = useState(false);
+  const [scanPhase, setScanPhase] = useState<"reading-page" | "extracting-ai" | null>(
+    null,
+  );
   const currentStepIndex = steps.indexOf(currentStep);
   /** Where Cover letter back navigation should return after skipping steps. */
   const [resultsBackStep, setResultsBackStep] = useState<"scan" | "resume" | "tailor">("tailor");
@@ -266,11 +280,15 @@ export function App() {
     }
 
     setIsScanning(true);
+    setScanPhase("reading-page");
     setScanError(null);
 
     try {
       // result contains raw page text plus a local fallback extraction.
-      const result = await scanCurrentTab(readActiveTabText);
+      const result = await scanCurrentTab(() =>
+        readActiveTabText({ tabId: hostTabIdFromEmbed }),
+      );
+      setScanPhase("extracting-ai");
       // aiInsights replaces the local fallback with higher-quality extraction.
       const aiInsights = await extractJobInsightsWithAiProvider(
         result.rawText,
@@ -301,6 +319,7 @@ export function App() {
     } finally {
       // Always stop loading, whether the scan succeeds or fails.
       setIsScanning(false);
+      setScanPhase(null);
     }
   }
 
@@ -350,6 +369,7 @@ export function App() {
                   apiKeyConfigured={Boolean(apiKey.trim())}
                   error={scanError}
                   isScanning={isScanning}
+                  scanPhase={scanPhase}
                   scannedJob={scannedJob}
                   onGoToResume={() => setCurrentStep("resume")}
                   onGoToCoverLetter={() => {

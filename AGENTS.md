@@ -97,11 +97,11 @@ Reusable UI should be extracted only when repetition appears naturally, for exam
 ## Chrome Extension Rules
 
 - Use Manifest V3.
-- Request minimal permissions.
-- Prefer `activeTab`, `storage`, and `scripting` for the MVP.
-- Do not request broad host permissions unless required and explained.
+- Request minimal permissions where possible; job scan uses manifest `host_permissions` `http://*/*` and `https://*/*` (see `docs/JOB_PAGE_SCAN.md`).
+- Prefer `activeTab`, `storage`, and `scripting` plus documented host access for scan and AI APIs.
 - Read the active page only after a user action such as clicking "Scan Job Page".
-- Keep content scripts focused on page extraction, not business logic.
+- Job scan runs via the service worker (`executeScript` + `jobPageTextExtractor.ts`), not a scan content script. See `docs/JOB_PAGE_SCAN.md`.
+- Content scripts are for the floating widget only; keep them free of business logic.
 
 ## Testing And Verification
 

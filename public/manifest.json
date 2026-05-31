@@ -40,6 +40,8 @@
     }
   ],
   "host_permissions": [
+    "http://*/*",
+    "https://*/*",
     "https://api.openai.com/*",
     "https://api.deepseek.com/*",
     "https://generativelanguage.googleapis.com/*",
